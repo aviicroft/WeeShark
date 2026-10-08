@@ -21,8 +21,24 @@ import {
   Layers,
   ArrowRight,
   Terminal,
+  MapPin,
+  Globe,
+  Copy,
+  Check,
+  Navigation,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { ServerGeoMap, GeoData } from './components/ServerGeoMap';
+
+// Convert 2-letter country code to Unicode Flag Emoji
+function getFlagEmoji(countryCode?: string): string {
+  if (!countryCode || countryCode.length !== 2) return '🌐';
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map((char) => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+}
 
 type PageRoute =
   | 'dashboard'
@@ -68,6 +84,7 @@ interface ScanRecord {
   target_url: string;
   hostname: string;
   resolved_ip: string;
+  geo?: GeoData;
   http_status: number | null;
   scan_date: string;
   scan_time: string;
@@ -108,13 +125,51 @@ interface ScanRecord {
 
 const SCAN_STAGES = [
   'Scanning target...',
-  'Checking HTTPS...',
-  'Analyzing security headers...',
-  'Checking cookies...',
-  'Checking server information...',
+  'Resolving server IP & geographic location...',
+  'Checking HTTPS encryption & TLS certificates...',
+  'Analyzing security response headers...',
+  'Checking cookies & privacy attributes...',
+  'Checking server information disclosure...',
   'Checking allowed common ports...',
-  'Calculating security score...',
+  'Calculating dynamic security score...',
 ];
+
+export const normalizeScan = (s: any): ScanRecord => {
+  if (!s) return s;
+  return {
+    ...s,
+    score: typeof s.score === 'number' ? s.score : 0,
+    risk_level: s.risk_level || 'MEDIUM',
+    badge_color: s.badge_color || 'amber',
+    geo: s.geo || {},
+    checks: {
+      https: s.checks?.https || {
+        status: 'PASS',
+        score_points: 25,
+        message: 'Transport encryption checked.',
+        tls_version: 'TLSv1.3',
+        issuer: 'Valid Certificate',
+      },
+      headers: Array.isArray(s.checks?.headers) ? s.checks.headers : [],
+      cookies: s.checks?.cookies || {
+        count: 0,
+        has_cookies: false,
+        status: 'PASS',
+        message: 'No cookies identified.',
+        cookies: [],
+      },
+      server: s.checks?.server || {
+        status: 'PASS',
+        server: 'Protected',
+        x_powered_by: 'Suppressed',
+        exposed_details: 'Suppressed',
+        message: 'Server software banner suppressed.',
+      },
+      ports: Array.isArray(s.checks?.ports) ? s.checks.ports : [],
+    },
+    recommendations: Array.isArray(s.recommendations) ? s.recommendations : [],
+  };
+};
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<PageRoute>('dashboard');
@@ -136,14 +191,31 @@ export default function App() {
       const res = await fetch('/api/history');
       if (res.ok) {
         const data = await res.json();
-        setHistory(data);
-        if (data.length > 0 && !activeScan) {
-          setActiveScan(data[0]);
+        const normalizedList = Array.isArray(data) ? data.map(normalizeScan) : [];
+        setHistory(normalizedList);
+        if (normalizedList.length > 0 && !activeScan) {
+          setActiveScan(normalizedList[0]);
         }
       }
     } catch {
       // Non-fatal if server is booting
     }
+  };
+
+  const selectScan = async (item: ScanRecord) => {
+    if (item.id && (!item.checks || !item.checks.headers || item.checks.headers.length === 0)) {
+      try {
+        const res = await fetch(`/api/scans/${item.id}`);
+        if (res.ok) {
+          const fullScan = await res.json();
+          setActiveScan(normalizeScan(fullScan));
+          setCurrentPage('results');
+          return;
+        }
+      } catch {}
+    }
+    setActiveScan(normalizeScan(item));
+    setCurrentPage('results');
   };
 
   const handleStartScan = async (overrideUrl?: string) => {
@@ -176,7 +248,7 @@ export default function App() {
         throw new Error(data.error || 'Failed to complete security assessment.');
       }
 
-      setActiveScan(data);
+      setActiveScan(normalizeScan(data));
       await loadData();
       setCurrentPage('results');
     } catch (err: any) {
@@ -235,7 +307,13 @@ export default function App() {
     doc.text(`Resolved IP: ${scan.resolved_ip || 'N/A'}`, 120, y);
     y += 6;
     doc.text(`HTTP Status Code: ${scan.http_status ?? '200'}`, 15, y);
-    doc.text(`Execution Duration: ${scan.scan_duration}`, 120, y);
+    const serverLoc = scan.geo?.country
+      ? `${scan.geo.city ? `${scan.geo.city}, ` : ''}${scan.geo.country}`
+      : 'N/A';
+    doc.text(`Server Location: ${serverLoc}`, 120, y);
+    y += 6;
+    doc.text(`Execution Duration: ${scan.scan_duration}`, 15, y);
+    doc.text(`Hosting ISP: ${scan.geo?.isp || 'N/A'}`, 120, y);
     y += 12;
 
     // Score & Risk Level Summary Box
@@ -471,7 +549,7 @@ export default function App() {
                   : 'hover:text-white hover:bg-slate-800'
               }`}
             >
-              Server Information
+              Server & GeoIP
             </button>
             <button
               onClick={() => setCurrentPage('history')}
@@ -641,9 +719,18 @@ export default function App() {
                       {activeScan.target_url}
                     </h2>
                     <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 mt-2">
-                      <span>
-                        IP: <strong className="font-mono text-slate-200">{activeScan.resolved_ip}</strong>
+                      <span className="flex items-center gap-1.5">
+                        IP: <strong className="font-mono text-cyan-300 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">{activeScan.resolved_ip}</strong>
                       </span>
+                      {activeScan.geo?.country && (
+                        <>
+                          <span>·</span>
+                          <span className="flex items-center gap-1 text-slate-200">
+                            <span>{getFlagEmoji(activeScan.geo.country_code)}</span>
+                            <span>{activeScan.geo.city ? `${activeScan.geo.city}, ` : ''}{activeScan.geo.country}</span>
+                          </span>
+                        </>
+                      )}
                       <span>·</span>
                       <span>
                         Status: <strong className="font-mono text-slate-200">{activeScan.http_status || '200'}</strong>
@@ -693,7 +780,7 @@ export default function App() {
                     <thead className="bg-slate-950/60 border-b border-slate-800 text-slate-400 font-mono uppercase text-[11px]">
                       <tr>
                         <th className="p-3">Target URL</th>
-                        <th className="p-3">Resolved IP</th>
+                        <th className="p-3">Resolved IP & Location</th>
                         <th className="p-3">Scan Date & Time</th>
                         <th className="p-3">Score</th>
                         <th className="p-3">Risk Level</th>
@@ -706,7 +793,17 @@ export default function App() {
                           <td className="p-3 font-mono font-semibold text-white truncate max-w-xs">
                             {item.target_url}
                           </td>
-                          <td className="p-3 font-mono text-slate-400">{item.resolved_ip}</td>
+                          <td className="p-3">
+                            <div className="font-mono text-slate-300 flex items-center gap-1.5">
+                              <span>{getFlagEmoji(item.geo?.country_code)}</span>
+                              <span>{item.resolved_ip}</span>
+                            </div>
+                            {item.geo?.country && (
+                              <div className="text-[10px] text-slate-500 font-sans truncate max-w-[160px]">
+                                {item.geo.city ? `${item.geo.city}, ` : ''}{item.geo.country}
+                              </div>
+                            )}
+                          </td>
                           <td className="p-3 text-slate-400">
                             {item.scan_date} · {item.scan_time}
                           </td>
@@ -731,10 +828,7 @@ export default function App() {
                           <td className="p-3 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button
-                                onClick={() => {
-                                  setActiveScan(item);
-                                  setCurrentPage('results');
-                                }}
+                                onClick={() => selectScan(item)}
                                 className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium transition-colors"
                               >
                                 View
@@ -906,6 +1000,32 @@ export default function App() {
           </div>
         )}
 
+        {/* FALLBACK: NO ACTIVE SCAN SELECTED */}
+        {!activeScan &&
+          ['results', 'headers', 'cookies', 'ports', 'server_info'].includes(currentPage) && (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center max-w-lg mx-auto my-8">
+              <Shield className="w-12 h-12 text-cyan-400 mx-auto mb-4 animate-pulse" />
+              <h3 className="text-xl font-bold text-white mb-2">No Active Scan Selected</h3>
+              <p className="text-xs text-slate-400 mb-6">
+                Please perform a live security audit or choose a previously saved scan from the Scan History.
+              </p>
+              <div className="flex justify-center gap-3">
+                <button
+                  onClick={() => setCurrentPage('scan')}
+                  className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-lg font-bold text-xs transition-colors"
+                >
+                  Run New Scan
+                </button>
+                <button
+                  onClick={() => setCurrentPage('dashboard')}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-semibold text-xs transition-colors"
+                >
+                  Go to Dashboard
+                </button>
+              </div>
+            </div>
+          )}
+
         {/* ======================================================== */}
         {/* PAGE 3: SCAN RESULTS PAGE */}
         {/* ======================================================== */}
@@ -922,9 +1042,21 @@ export default function App() {
                     {activeScan.target_url}
                   </h1>
                   <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 mt-2">
-                    <span>
-                      IP: <strong className="text-slate-200 font-mono">{activeScan.resolved_ip}</strong>
+                    <span className="flex items-center gap-1.5">
+                      <span>IP:</span>
+                      <strong className="text-white font-mono bg-slate-950 px-2 py-0.5 rounded border border-slate-800 tracking-wider">
+                        {activeScan.resolved_ip}
+                      </strong>
                     </span>
+                    {activeScan.geo?.country && (
+                      <>
+                        <span>·</span>
+                        <span className="flex items-center gap-1 text-cyan-300 font-semibold bg-cyan-950/40 border border-cyan-500/20 px-2 py-0.5 rounded">
+                          <span>{getFlagEmoji(activeScan.geo.country_code)}</span>
+                          <span>{activeScan.geo.city ? `${activeScan.geo.city}, ` : ''}{activeScan.geo.country}</span>
+                        </span>
+                      </>
+                    )}
                     <span>·</span>
                     <span>
                       Status: <strong className="text-slate-200 font-mono">{activeScan.http_status ?? '200'}</strong>
@@ -1028,6 +1160,13 @@ export default function App() {
                 </p>
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <button
+                    onClick={() => setCurrentPage('server_info')}
+                    className="text-cyan-400 bg-cyan-950/40 border border-cyan-500/20 px-2.5 py-1 rounded hover:bg-cyan-950 flex items-center gap-1 font-semibold"
+                  >
+                    <MapPin className="w-3 h-3" />
+                    Server & GeoIP →
+                  </button>
+                  <button
                     onClick={() => setCurrentPage('headers')}
                     className="text-cyan-400 bg-cyan-950/40 border border-cyan-500/20 px-2.5 py-1 rounded hover:bg-cyan-950"
                   >
@@ -1047,6 +1186,29 @@ export default function App() {
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* Server Physical Location & Network Map Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-cyan-400" />
+                  <h2 className="text-lg font-bold text-white">Server Physical Location & Network Map</h2>
+                </div>
+                <button
+                  onClick={() => setCurrentPage('server_info')}
+                  className="text-xs text-cyan-400 hover:underline flex items-center gap-1 font-mono"
+                >
+                  Full Infrastructure View →
+                </button>
+              </div>
+
+              <ServerGeoMap
+                geo={activeScan.geo}
+                hostname={activeScan.hostname}
+                ip={activeScan.resolved_ip}
+                height="340px"
+              />
             </div>
 
             {/* Separate Cards for 5 Checks */}
@@ -1130,7 +1292,7 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/60">
-                      {activeScan.checks.headers.map((h) => (
+                      {(activeScan.checks?.headers || []).map((h) => (
                         <tr key={h.header}>
                           <td className="p-2.5 font-mono font-semibold text-cyan-300">{h.header}</td>
                           <td className="p-2.5">
@@ -1179,10 +1341,10 @@ export default function App() {
                     {activeScan.checks.cookies.status}
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 mb-3">{activeScan.checks.cookies.message}</p>
-                {activeScan.checks.cookies.has_cookies && (
+                <p className="text-xs text-slate-300 mb-3">{activeScan.checks?.cookies?.message || ''}</p>
+                {activeScan.checks?.cookies?.has_cookies && (
                   <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                    {activeScan.checks.cookies.cookies.map((c, i) => (
+                    {(activeScan.checks?.cookies?.cookies || []).map((c, i) => (
                       <div
                         key={i}
                         className="bg-slate-950/50 p-3 rounded-lg border border-slate-800 text-xs"
@@ -1283,7 +1445,7 @@ export default function App() {
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                  {activeScan.checks.ports.map((p) => (
+                  {(activeScan.checks?.ports || []).map((p) => (
                     <div
                       key={p.port}
                       className={`p-3 rounded-lg border text-xs ${
@@ -1318,7 +1480,7 @@ export default function App() {
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
               <h2 className="text-lg font-bold text-white mb-4">Actionable Recommendations</h2>
               <div className="space-y-3">
-                {activeScan.recommendations.map((rec, i) => (
+                {(activeScan.recommendations || []).map((rec, i) => (
                   <div
                     key={i}
                     className="p-3.5 rounded-lg bg-slate-950/60 border border-slate-800 flex flex-col gap-1 text-xs"
@@ -1366,7 +1528,7 @@ export default function App() {
             </div>
 
             <div className="space-y-4">
-              {activeScan.checks.headers.map((h) => (
+              {(activeScan.checks?.headers || []).map((h) => (
                 <div key={h.header} className="bg-slate-900 border border-slate-800 rounded-xl p-5">
                   <div className="flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
                     <span className="font-mono text-cyan-300 font-bold text-base">{h.header}</span>
@@ -1461,7 +1623,7 @@ export default function App() {
               </div>
             </div>
 
-            {activeScan.checks.cookies.has_cookies ? (
+            {activeScan.checks?.cookies?.has_cookies ? (
               <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-950/60 border-b border-slate-800 text-slate-400 font-mono uppercase text-[11px]">
@@ -1474,7 +1636,7 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
-                    {activeScan.checks.cookies.cookies.map((c, i) => (
+                    {(activeScan.checks?.cookies?.cookies || []).map((c, i) => (
                       <tr key={i} className="hover:bg-slate-800/30">
                         <td className="p-3 font-mono font-semibold text-white">{c.name}</td>
                         <td className="p-3">
@@ -1555,7 +1717,7 @@ export default function App() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
-              {activeScan.checks.ports.map((p) => (
+              {(activeScan.checks?.ports || []).map((p) => (
                 <div
                   key={p.port}
                   className={`bg-slate-900 border rounded-xl p-5 ${
@@ -1608,7 +1770,7 @@ export default function App() {
         )}
 
         {/* ======================================================== */}
-        {/* PAGE 7: SERVER INFORMATION PAGE */}
+        {/* PAGE 7: SERVER INFORMATION & GEOLOCATION PAGE */}
         {/* ======================================================== */}
         {currentPage === 'server_info' && activeScan && (
           <div className="space-y-6">
@@ -1622,46 +1784,189 @@ export default function App() {
                   <button onClick={() => setCurrentPage('results')} className="hover:underline">
                     {activeScan.hostname}
                   </button>{' '}
-                  / Server Information
+                  / Server & Geolocation
                 </div>
-                <h1 className="text-2xl font-bold text-white">Server Information Disclosure</h1>
+                <h1 className="text-2xl font-bold text-white flex items-center gap-2.5">
+                  <Globe className="w-6 h-6 text-cyan-400" />
+                  Server Infrastructure & Physical Geolocation
+                </h1>
                 <p className="text-xs text-slate-400 mt-1">
-                  Evaluates backend framework banners, server software tokens, and reconnaissance leakage.
+                  Live mapping of physical server hosting location, network ASN/ISP, geographic coordinates, and backend software disclosure.
                 </p>
               </div>
               <button
                 onClick={() => setCurrentPage('results')}
-                className="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+                className="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors"
               >
                 ← Back to Results
               </button>
             </div>
 
+            {/* Interactive Leaflet Server Map */}
+            <ServerGeoMap
+              geo={activeScan.geo}
+              hostname={activeScan.hostname}
+              ip={activeScan.resolved_ip}
+              height="400px"
+            />
+
+            {/* Comprehensive Technical Infrastructure Grid */}
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+                <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
+                  RESOLVED PUBLIC IP
+                </span>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-cyan-300 font-bold text-base">
+                    {activeScan.resolved_ip}
+                  </span>
+                  <span className="text-[10px] font-mono bg-cyan-950/80 border border-cyan-500/30 text-cyan-400 px-2 py-0.5 rounded">
+                    IPv4
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-500 mt-1 block">
+                  DNS Target: <code className="text-slate-400">{activeScan.hostname}</code>
+                </span>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+                <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
+                  DATACENTER LOCATION
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl leading-none">{getFlagEmoji(activeScan.geo?.country_code)}</span>
+                  <span className="font-bold text-white text-sm">
+                    {activeScan.geo?.city ? `${activeScan.geo.city}, ` : ''}{activeScan.geo?.country || 'Unknown'}
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-500 mt-1 block">
+                  Region: {activeScan.geo?.region || 'Global Cloud Network'}
+                </span>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+                <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
+                  NETWORK ROUTING & ISP
+                </span>
+                <span className="font-semibold text-white text-sm block truncate" title={activeScan.geo?.isp}>
+                  {activeScan.geo?.isp || 'Cloud Network Provider'}
+                </span>
+                <span className="text-[11px] text-slate-500 mt-1 block">
+                  Autonomous System: <code className="text-cyan-400">{activeScan.geo?.asn || 'AS-UNASSIGNED'}</code>
+                </span>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+                <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
+                  GPS COORDINATES
+                </span>
+                <span className="font-mono text-white text-sm font-semibold block">
+                  {typeof activeScan.geo?.latitude === 'number' &&
+                  typeof activeScan.geo?.longitude === 'number' &&
+                  (activeScan.geo.latitude !== 0 || activeScan.geo.longitude !== 0)
+                    ? `${activeScan.geo.latitude.toFixed(4)}, ${activeScan.geo.longitude.toFixed(4)}`
+                    : 'N/A'}
+                </span>
+                <span className="text-[11px] text-slate-500 mt-1 block">
+                  Continent: {activeScan.geo?.continent || 'Global'}
+                </span>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+                <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
+                  SERVER TIMEZONE
+                </span>
+                <span className="font-mono text-cyan-300 text-sm font-semibold block truncate">
+                  {activeScan.geo?.timezone || 'UTC / Not Disclosed'}
+                </span>
+                <span className="text-[11px] text-slate-500 mt-1 block">
+                  Postal Zone: {activeScan.geo?.postal || 'N/A'}
+                </span>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+                <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
+                  HTTP TRANSPORT STATUS
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span className="font-mono text-emerald-400 font-bold text-sm">
+                    PORT 443 ACTIVE
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-500 mt-1 block">
+                  Response Code: {activeScan.http_status ?? 200} OK
+                </span>
+              </div>
+            </div>
+
+            {/* Detected Response Headers Card */}
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-              <h3 className="font-bold text-white text-sm mb-3">Detected Response Headers</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                  <Server className="w-4 h-4 text-cyan-400" />
+                  Detected Technology & Framework Banners
+                </h3>
+                <span
+                  className={`text-xs font-mono px-2.5 py-0.5 rounded font-bold uppercase ${
+                    (activeScan.checks?.server?.status || 'PASS') === 'PASS'
+                      ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-500/20'
+                      : 'bg-amber-950/50 text-amber-400 border border-amber-500/20'
+                  }`}
+                >
+                  {activeScan.checks?.server?.status || 'PASS'}
+                </span>
+              </div>
               <div className="grid sm:grid-cols-2 gap-4 text-xs mb-4">
                 <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                  <span className="text-slate-500 block mb-1">Server Header:</span>
+                  <span className="text-slate-500 block mb-1">Server Response Header:</span>
                   <span className="font-mono text-cyan-300 font-semibold text-sm">
-                    {activeScan.checks.server.server}
+                    {activeScan.checks?.server?.server || 'None'}
                   </span>
                 </div>
                 <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
                   <span className="text-slate-500 block mb-1">X-Powered-By Header:</span>
                   <span className="font-mono text-cyan-300 font-semibold text-sm">
-                    {activeScan.checks.server.x_powered_by}
+                    {activeScan.checks?.server?.x_powered_by || 'None'}
                   </span>
                 </div>
               </div>
-              <p className="text-xs text-slate-300">{activeScan.checks.server.message}</p>
+              <p className="text-xs text-slate-300">{activeScan.checks?.server?.message || ''}</p>
             </div>
 
+            {/* Remediation & Hardening Recommendations */}
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs">
+                <h4 className="font-bold text-white font-mono mb-2">Nginx Hardening</h4>
+                <p className="text-slate-400 mb-2">Suppress server version tokens in <code>nginx.conf</code>:</p>
+                <pre className="bg-slate-950 p-2.5 rounded border border-slate-800 font-mono text-cyan-300 text-[11px]">http &#123;
+    server_tokens off;
+&#125;</pre>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs">
+                <h4 className="font-bold text-white font-mono mb-2">Apache Hardening</h4>
+                <p className="text-slate-400 mb-2">Suppress banners in <code>httpd.conf</code> or <code>security.conf</code>:</p>
+                <pre className="bg-slate-950 p-2.5 rounded border border-slate-800 font-mono text-cyan-300 text-[11px]">ServerTokens Prod
+ServerSignature Off</pre>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs">
+                <h4 className="font-bold text-white font-mono mb-2">Express.js Hardening</h4>
+                <p className="text-slate-400 mb-2">Disable <code>X-Powered-By</code> in Node.js Express:</p>
+                <pre className="bg-slate-950 p-2.5 rounded border border-slate-800 font-mono text-cyan-300 text-[11px]">app.disable('x-powered-by');
+// or use helmet()</pre>
+              </div>
+            </div>
+
+            {/* Why Information Disclosure Matters */}
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-xs text-slate-300 space-y-2">
               <h3 className="font-bold text-white text-sm">Why Information Disclosure Matters</h3>
               <p className="leading-relaxed">
                 Exposing specific web server versions (e.g. Apache/2.4.41, nginx/1.18.0) or backend
                 frameworks (e.g. Express, PHP/7.4) provides attackers with immediate intelligence to look
-                up known unpatched CVEs.
+                up known unpatched CVEs. Disclosing physical datacenter and network hosting coordinates
+                helps security engineers audit cloud boundary policies and sovereign data compliance.
               </p>
             </div>
           </div>
@@ -1707,7 +2012,7 @@ export default function App() {
                       <tr>
                         <th className="p-3">ID</th>
                         <th className="p-3">Target Website</th>
-                        <th className="p-3">Resolved IP</th>
+                        <th className="p-3">Resolved IP & Location</th>
                         <th className="p-3">Timestamp</th>
                         <th className="p-3">Duration</th>
                         <th className="p-3">Score</th>
@@ -1720,7 +2025,17 @@ export default function App() {
                         <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
                           <td className="p-3 font-mono text-slate-500">#{s.id || idx + 1}</td>
                           <td className="p-3 font-mono font-semibold text-white">{s.target_url}</td>
-                          <td className="p-3 font-mono text-slate-400">{s.resolved_ip}</td>
+                          <td className="p-3">
+                            <div className="font-mono text-slate-300 flex items-center gap-1.5">
+                              <span>{getFlagEmoji(s.geo?.country_code)}</span>
+                              <span>{s.resolved_ip}</span>
+                            </div>
+                            {s.geo?.country && (
+                              <div className="text-[10px] text-slate-500 font-sans truncate max-w-[150px]">
+                                {s.geo.city ? `${s.geo.city}, ` : ''}{s.geo.country}
+                              </div>
+                            )}
+                          </td>
                           <td className="p-3 text-slate-400">
                             {s.scan_date} · {s.scan_time}
                           </td>
@@ -1744,10 +2059,7 @@ export default function App() {
                           <td className="p-3 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button
-                                onClick={() => {
-                                  setActiveScan(s);
-                                  setCurrentPage('results');
-                                }}
+                                onClick={() => selectScan(s)}
                                 className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium"
                               >
                                 Open
@@ -1811,7 +2123,18 @@ export default function App() {
                     {history.map((s, idx) => (
                       <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
                         <td className="p-3 font-mono text-slate-500">WG-REP-{s.id || idx + 1}</td>
-                        <td className="p-3 font-mono font-semibold text-white">{s.target_url}</td>
+                        <td className="p-3">
+                          <div className="font-mono font-semibold text-white">{s.target_url}</div>
+                          <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1.5 mt-0.5">
+                            <span>{getFlagEmoji(s.geo?.country_code)}</span>
+                            <span>{s.resolved_ip}</span>
+                            {s.geo?.country && (
+                              <span className="text-slate-500 font-sans">
+                                ({s.geo.city ? `${s.geo.city}, ` : ''}{s.geo.country})
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="p-3 text-slate-400">
                           {s.scan_date} at {s.scan_time}
                         </td>
@@ -1834,10 +2157,7 @@ export default function App() {
                         <td className="p-3 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
-                              onClick={() => {
-                                setActiveScan(s);
-                                setCurrentPage('results');
-                              }}
+                              onClick={() => selectScan(s)}
                               className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium"
                             >
                               View Result

@@ -11,7 +11,11 @@
                 <span class="banner-kicker">REAL-TIME ASSESSMENT RESULT</span>
                 <h1 class="banner-target-title font-mono">{{ scan.target_url }}</h1>
                 <div class="meta-inline-tags">
-                    <span>Resolved IP: <strong class="font-mono text-white">{{ scan.resolved_ip }}</strong></span>
+                    <span>Resolved IP: <strong class="font-mono text-cyan-300">{{ scan.resolved_ip }}</strong></span>
+                    {% if scan.geo and scan.geo.country %}
+                    <span>·</span>
+                    <span>Server Location: <strong class="text-white">{{ scan.geo.city + ', ' if scan.geo.city else '' }}{{ scan.geo.country }}</strong></span>
+                    {% endif %}
                     <span>·</span>
                     <span>HTTP Status: <strong class="font-mono text-white">{{ scan.http_status or '200' }}</strong></span>
                     <span>·</span>

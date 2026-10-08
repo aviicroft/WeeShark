@@ -15,6 +15,12 @@ Routes:
 """
 
 import os
+import sys
+
+_CURR_DIR = os.path.dirname(os.path.abspath(__file__))
+if _CURR_DIR not in sys.path:
+    sys.path.insert(0, _CURR_DIR)
+
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file
 from scanner import scan_target
 from database import get_scan_by_id, get_latest_scan, get_all_scans, get_dashboard_stats
@@ -30,7 +36,8 @@ def inject_global_data():
     latest = get_latest_scan()
     return {
         "latest_scan_id": latest["id"] if latest else 1,
-        "has_scans": latest is not None
+        "has_scans": latest is not None,
+        "mapbox_token": os.environ.get("VITE_MAPBOX_TOKEN") or os.environ.get("MAPBOX_TOKEN", "")
     }
 
 

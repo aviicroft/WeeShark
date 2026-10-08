@@ -111,6 +111,36 @@ async function runTests() {
     assert(res.status === 404, `Expected 404, got ${res.status}`);
   });
 
+  await test('GET /api/geoip/127.0.0.1 blocks loopback with 403 (SSRF)', async () => {
+    const res = await fetch(`${baseUrl}/api/geoip/127.0.0.1`);
+    assert(res.status === 403, `Expected 403, got ${res.status}`);
+    const json = await res.json();
+    assert(json.error.includes('SSRF Protection'), 'Expected SSRF error');
+  });
+
+  await test('GET /api/geoip/localhost blocks localhost with 403 (SSRF)', async () => {
+    const res = await fetch(`${baseUrl}/api/geoip/localhost`);
+    assert(res.status === 403, `Expected 403, got ${res.status}`);
+    const json = await res.json();
+    assert(json.error.includes('SSRF Protection'), 'Expected SSRF error');
+  });
+
+  await test('GET /api/geoip/192.168.1.1 blocks private IP with 403 (SSRF)', async () => {
+    const res = await fetch(`${baseUrl}/api/geoip/192.168.1.1`);
+    assert(res.status === 403, `Expected 403, got ${res.status}`);
+    const json = await res.json();
+    assert(json.error.includes('SSRF Protection'), 'Expected SSRF error');
+  });
+
+  await test('GET /api/geoip/8.8.8.8 returns geolocation metadata', async () => {
+    const res = await fetch(`${baseUrl}/api/geoip/8.8.8.8`);
+    assert(res.status === 200, `Expected 200, got ${res.status}`);
+    const json = await res.json();
+    assert(json.ip === '8.8.8.8', 'Expected ip 8.8.8.8');
+    assert(typeof json.latitude === 'number', 'Expected numeric latitude');
+    assert(typeof json.longitude === 'number', 'Expected numeric longitude');
+  });
+
   await new Promise<void>((resolve) => {
     server.close(() => {
       console.log(`\nTests finished: ${passed}/${total} passed.\n`);

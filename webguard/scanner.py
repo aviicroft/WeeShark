@@ -18,12 +18,26 @@ import ssl
 import time
 import json
 import os
+import sys
 import re
 from datetime import datetime
 import urllib.parse
 import urllib.request
 import ipaddress
 import concurrent.futures
+
+# Ensure directory is on path for database import
+_CURR_DIR = os.path.dirname(os.path.abspath(__file__))
+if _CURR_DIR not in sys.path:
+    sys.path.insert(0, _CURR_DIR)
+
+# Force UTF-8 encoding on standard streams (especially on Windows)
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
 
 # Optional requests import if available in user's environment
 try:
@@ -61,6 +75,137 @@ def is_private_or_restricted_ip(ip_str):
         )
     except ValueError:
         return True
+
+
+def get_ip_geolocation(ip_str):
+    """
+    Retrieves geographic location and hosting ISP metadata for the resolved server IP address.
+    Uses reliable external GeoIP endpoints (ipwho.is with fallback to freeipapi.com).
+    Returns a standardized dictionary containing coordinates, location, and ASN info.
+    """
+    default_geo = {
+        "ip": ip_str,
+        "success": False,
+        "city": "Unknown",
+        "region": "Unknown",
+        "country": "Unknown",
+        "country_code": "",
+        "continent": "Unknown",
+        "latitude": 0.0,
+        "longitude": 0.0,
+        "isp": "Unknown ISP",
+        "org": "Unknown Organization",
+        "asn": "",
+        "timezone": "",
+        "postal": "",
+        "is_private": False
+    }
+
+    if not ip_str or ip_str in ("127.0.0.1", "::1", "localhost", "0.0.0.0") or is_private_or_restricted_ip(ip_str):
+        default_geo["is_private"] = True
+        default_geo["city"] = "Localhost / Internal"
+        default_geo["country"] = "Private Network"
+        default_geo["isp"] = "Loopback / RFC1918 (SSRF Restricted)"
+        return default_geo
+
+    # Check for commercial GeoIP key in environment (e.g. ipinfo.io)
+    geoip_api_key = os.environ.get("GEOIP_API_KEY", "").strip() or os.environ.get("IPINFO_TOKEN", "").strip()
+    if geoip_api_key:
+        try:
+            req = urllib.request.Request(
+                f"https://ipinfo.io/{ip_str}/json?token={geoip_api_key}",
+                headers={"User-Agent": "WebGuard-Security-Scanner/2.0"}
+            )
+            with urllib.request.urlopen(req, timeout=3.5) as resp:
+                data = json.loads(resp.read().decode("utf-8", errors="ignore"))
+                loc = (data.get("loc") or "").split(",")
+                lat = float(loc[0]) if len(loc) == 2 else 0.0
+                lon = float(loc[1]) if len(loc) == 2 else 0.0
+                org_parts = (data.get("org") or "").split(" ", 1)
+                asn = org_parts[0] if org_parts and org_parts[0].startswith("AS") else ""
+                isp = org_parts[1] if len(org_parts) > 1 else (data.get("org") or "Unknown ISP")
+                return {
+                    "ip": ip_str,
+                    "success": True,
+                    "city": data.get("city") or "Unknown",
+                    "region": data.get("region") or "Unknown",
+                    "country": data.get("country") or "Unknown",
+                    "country_code": data.get("country") or "",
+                    "continent": "Unknown",
+                    "latitude": lat,
+                    "longitude": lon,
+                    "isp": isp,
+                    "org": data.get("org") or "Unknown Organization",
+                    "asn": asn,
+                    "timezone": data.get("timezone") or "",
+                    "postal": str(data.get("postal") or ""),
+                    "is_private": False
+                }
+        except Exception:
+            pass
+
+    # Try Primary Provider: ipwho.is
+    try:
+        req = urllib.request.Request(
+            f"https://ipwho.is/{ip_str}",
+            headers={"User-Agent": "WebGuard-Security-Scanner/2.0"}
+        )
+        with urllib.request.urlopen(req, timeout=3.5) as resp:
+            data = json.loads(resp.read().decode("utf-8", errors="ignore"))
+            if data.get("success"):
+                conn = data.get("connection", {})
+                tz = data.get("timezone", {})
+                return {
+                    "ip": ip_str,
+                    "success": True,
+                    "city": data.get("city") or "Unknown",
+                    "region": data.get("region") or "Unknown",
+                    "country": data.get("country") or "Unknown",
+                    "country_code": data.get("country_code") or "",
+                    "continent": data.get("continent") or "Unknown",
+                    "latitude": float(data.get("latitude") or 0.0),
+                    "longitude": float(data.get("longitude") or 0.0),
+                    "isp": conn.get("isp") or conn.get("org") or "Unknown ISP",
+                    "org": conn.get("org") or conn.get("isp") or "Unknown Organization",
+                    "asn": str(conn.get("asn") or ""),
+                    "timezone": tz.get("id") or "",
+                    "postal": str(data.get("postal") or ""),
+                    "is_private": False
+                }
+    except Exception:
+        pass
+
+    # Try Fallback Provider: freeipapi.com
+    try:
+        req = urllib.request.Request(
+            f"https://freeipapi.com/api/json/{ip_str}",
+            headers={"User-Agent": "WebGuard-Security-Scanner/2.0"}
+        )
+        with urllib.request.urlopen(req, timeout=3.5) as resp:
+            data = json.loads(resp.read().decode("utf-8", errors="ignore"))
+            lat = float(data.get("latitude") or 0.0)
+            lon = float(data.get("longitude") or 0.0)
+            return {
+                "ip": ip_str,
+                "success": bool(lat or lon or data.get("countryName")),
+                "city": data.get("cityName") or "Unknown",
+                "region": data.get("regionName") or "Unknown",
+                "country": data.get("countryName") or "Unknown",
+                "country_code": data.get("countryCode") or "",
+                "continent": data.get("continent") or "Unknown",
+                "latitude": lat,
+                "longitude": lon,
+                "isp": data.get("isp") or "Unknown ISP",
+                "org": data.get("isp") or "Unknown Organization",
+                "asn": str(data.get("asn") or ""),
+                "timezone": data.get("timeZone") or "",
+                "postal": str(data.get("zipCode") or ""),
+                "is_private": False
+            }
+    except Exception:
+        pass
+
+    return default_geo
 
 
 def validate_url(url_input):
@@ -645,12 +790,13 @@ def scan_target(target_url_input):
     except Exception as e:
         raise ConnectionError(f"Connection error while scanning target: {str(e)}")
 
-    # Step 4: Perform real-time security checks
+    # Step 4: Perform real-time security checks & network geolocation
     https_result = check_https(url, hostname)
     headers_result = check_headers(headers_dict)
     cookies_result = check_cookies(raw_cookies)
     server_result = check_server_info(headers_dict)
     ports_result = check_ports(resolved_ip)
+    geo_result = get_ip_geolocation(resolved_ip)
 
     # Step 5: Dynamic score & recommendations
     score, risk_level, badge_color = calculate_score(
@@ -671,6 +817,7 @@ def scan_target(target_url_input):
         "target_url": url,
         "hostname": hostname,
         "resolved_ip": resolved_ip,
+        "geo": geo_result,
         "http_status": http_status_code,
         "scan_date": scan_date_str,
         "scan_time": scan_time_str,
@@ -696,7 +843,7 @@ def scan_target(target_url_input):
         scan_id = save_scan(result_payload)
         result_payload["id"] = scan_id
     except Exception as db_err:
-        print(f"Database save notice: {db_err}")
+        print(f"Database save notice: {db_err}", file=sys.stderr)
         result_payload["id"] = 1
 
     # Also keep JSON history for backwards compatibility
@@ -721,6 +868,8 @@ def save_to_history(scan_result):
         summary_entry = {
             "target_url": scan_result["target_url"],
             "hostname": scan_result["hostname"],
+            "resolved_ip": scan_result.get("resolved_ip", ""),
+            "geo": scan_result.get("geo", {}),
             "score": scan_result["score"],
             "risk_level": scan_result["risk_level"],
             "badge_color": scan_result["badge_color"],
@@ -736,7 +885,7 @@ def save_to_history(scan_result):
             json.dump(history, f, indent=2)
     except Exception as e:
         # Don't let disk write errors fail the scan
-        print(f"Warning: Could not save scan history: {e}")
+        print(f"Warning: Could not save scan history: {e}", file=sys.stderr)
 
 
 def get_history():

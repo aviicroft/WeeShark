@@ -49,11 +49,23 @@ def generate_pdf_report(scan_data):
 
         c.setFont("Helvetica", 9)
         c.setFillColor(colors.HexColor("#334155"))
+        geo = scan_data.get("geo") or {}
+        loc_parts = []
+        if geo.get("city") and geo.get("city") != "Unknown":
+            loc_parts.append(geo.get("city"))
+        if geo.get("country") and geo.get("country") != "Unknown":
+            loc_parts.append(geo.get("country"))
+        location_str = ", ".join(loc_parts) if loc_parts else "N/A"
+        isp_str = geo.get("isp") or "N/A"
+
         c.drawString(40, y, f"Target Website: {scan_data.get('target_url')}")
         c.drawString(330, y, f"Resolved IP Address: {scan_data.get('resolved_ip', 'N/A')}")
         y -= 14
         c.drawString(40, y, f"HTTP Status: {scan_data.get('http_status', 'N/A')}")
-        c.drawString(330, y, f"Scan Execution Duration: {scan_data.get('scan_duration', 'N/A')}")
+        c.drawString(330, y, f"Server Location: {location_str}")
+        y -= 14
+        c.drawString(40, y, f"Scan Execution Duration: {scan_data.get('scan_duration', 'N/A')}")
+        c.drawString(330, y, f"Hosting ISP / Network: {isp_str[:28]}")
         y -= 25
 
         # Score & Risk Box
@@ -84,13 +96,15 @@ def generate_pdf_report(scan_data):
 
         y -= 55
 
+        checks = scan_data.get("checks") or {}
+
         # --- SECTION 2: TRANSPORT ENCRYPTION ---
         c.setFillColor(colors.HexColor("#0F172A"))
         c.setFont("Helvetica-Bold", 12)
         c.drawString(40, y, "2. HTTPS & Transport Layer Security")
         y -= 15
 
-        https_check = scan_data.get("checks", {}).get("https", {})
+        https_check = checks.get("https") or {}
         c.setFont("Helvetica-Bold", 9)
         c.setFillColor(colors.HexColor("#1E293B"))
         c.drawString(45, y, f"Status: [{https_check.get('status', 'N/A')}]")
@@ -108,7 +122,7 @@ def generate_pdf_report(scan_data):
         c.drawString(40, y, "3. HTTP Defense Response Headers")
         y -= 15
 
-        headers = scan_data.get("checks", {}).get("headers", [])
+        headers = checks.get("headers") or []
         for h in headers:
             c.setFont("Helvetica-Bold", 8.5)
             c.setFillColor(colors.HexColor("#0F172A"))
@@ -128,12 +142,12 @@ def generate_pdf_report(scan_data):
         c.drawString(40, y, "4. Cookie Flags & Server Disclosure")
         y -= 15
 
-        cookies = scan_data.get("checks", {}).get("cookies", {})
+        cookies = checks.get("cookies") or {}
         c.setFont("Helvetica-Bold", 8.5)
         c.drawString(45, y, f"Cookie Security: [{cookies.get('status', 'PASS')}] - {cookies.get('message', '')}")
         y -= 14
 
-        server = scan_data.get("checks", {}).get("server", {})
+        server = checks.get("server") or {}
         c.drawString(45, y, f"Server Banner Exposure: [{server.get('status', 'PASS')}]")
         y -= 11
         c.setFont("Helvetica", 8)
@@ -147,7 +161,7 @@ def generate_pdf_report(scan_data):
         c.drawString(40, y, "5. Common Port Analysis (Passive Probe: 80, 443, 22, 21, 8080)")
         y -= 14
 
-        ports = scan_data.get("checks", {}).get("ports", [])
+        ports = checks.get("ports") or []
         port_txt = " | ".join([f"Port {p.get('port')}: {p.get('status')}" for p in ports])
         c.setFont("Helvetica", 8.5)
         c.setFillColor(colors.HexColor("#334155"))

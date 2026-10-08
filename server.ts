@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express, { Request, Response } from 'express';
 import { spawn } from 'child_process';
 import path from 'path';
@@ -21,7 +22,7 @@ export function getPythonCommand(): string {
 
 // Helper: Check if IP is private or restricted (SSRF Protection)
 export function isRestrictedIP(ip: string): boolean {
-  if (ip === '127.0.0.1' || ip === '::1' || ip === '0.0.0.0') return true;
+  if (ip === '127.0.0.1' || ip === '::1' || ip === '0.0.0.0' || ip === 'localhost') return true;
 
   // IPv4 Private & Link-local ranges:
   // 10.0.0.0 - 10.255.255.255 (10/8)
@@ -113,6 +114,8 @@ app.post('/api/scan', async (req: Request, res: Response) => {
       env: {
         ...process.env,
         PYTHONPATH: path.join(ROOT_DIR, 'webguard'),
+        PYTHONIOENCODING: 'utf-8',
+        PYTHONUTF8: '1',
       },
       timeout: 30000,
     });
@@ -166,7 +169,12 @@ export function runPythonDb(scriptCode: string, args: string[] = []): Promise<an
   return new Promise((resolve, reject) => {
     const child = spawn(getPythonCommand(), ['-c', scriptCode, ...args], {
       cwd: ROOT_DIR,
-      env: { ...process.env, PYTHONPATH: path.join(ROOT_DIR, 'webguard') },
+      env: {
+        ...process.env,
+        PYTHONPATH: path.join(ROOT_DIR, 'webguard'),
+        PYTHONIOENCODING: 'utf-8',
+        PYTHONUTF8: '1',
+      },
       timeout: 10000,
     });
     let out = '';
@@ -245,6 +253,36 @@ print(json.dumps(scan))
     return res.json(scan);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
+  }
+});
+
+// API: Query Live GeoIP for an IP Address (SSRF protected)
+app.get('/api/geoip/:ip', async (req: Request, res: Response) => {
+  const ip = req.params.ip?.trim();
+  if (!ip) {
+    return res.status(400).json({ error: 'IP address is required.' });
+  }
+
+  // SSRF Protection: ensure no restricted/private IP querying
+  if (isRestrictedIP(ip)) {
+    return res.status(403).json({
+      error: 'Queries for loopback or private IP ranges are restricted (SSRF Protection).',
+    });
+  }
+
+  try {
+    const geo = await runPythonDb(
+      `
+import sys, scanner, json
+ip = sys.argv[1]
+geo = scanner.get_ip_geolocation(ip)
+print(json.dumps(geo))
+`,
+      [ip]
+    );
+    return res.json(geo);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'GeoIP lookup failed' });
   }
 });
 

@@ -6,7 +6,12 @@ Stores real-time scan results, metadata, security checks, and recommendations.
 import sqlite3
 import json
 import os
+import sys
 from datetime import datetime
+
+_CURR_DIR = os.path.dirname(os.path.abspath(__file__))
+if _CURR_DIR not in sys.path:
+    sys.path.insert(0, _CURR_DIR)
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "webguard.db")
 
@@ -40,9 +45,15 @@ def init_db():
             issues_count INTEGER DEFAULT 0,
             checks_json TEXT NOT NULL,
             recommendations_json TEXT NOT NULL,
+            geo_json TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    # Migration: check if geo_json column exists for existing tables
+    cursor.execute("PRAGMA table_info(scans)")
+    columns = [row["name"] for row in cursor.fetchall()]
+    if "geo_json" not in columns:
+        cursor.execute("ALTER TABLE scans ADD COLUMN geo_json TEXT")
     conn.commit()
     conn.close()
 
@@ -58,6 +69,7 @@ def save_scan(scan_data):
 
     checks = scan_data.get("checks", {})
     recs = scan_data.get("recommendations", [])
+    geo = scan_data.get("geo", {})
 
     # Calculate issues count (failed/warning checks)
     issues_count = len(recs)
@@ -67,8 +79,8 @@ def save_scan(scan_data):
             target_url, hostname, resolved_ip, http_status,
             scan_date, scan_time, scan_timestamp, scan_duration, duration_seconds,
             score, risk_level, badge_color, issues_count,
-            checks_json, recommendations_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            checks_json, recommendations_json, geo_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         scan_data.get("target_url"),
         scan_data.get("hostname"),
@@ -84,7 +96,8 @@ def save_scan(scan_data):
         scan_data.get("badge_color", "amber"),
         issues_count,
         json.dumps(checks),
-        json.dumps(recs)
+        json.dumps(recs),
+        json.dumps(geo)
     ))
 
     scan_id = cursor.lastrowid
@@ -99,13 +112,17 @@ def row_to_dict(row):
         return None
     d = dict(row)
     try:
-        d["checks"] = json.loads(d.get("checks_json", "{}"))
+        d["checks"] = json.loads(d.get("checks_json", "{}")) or {}
     except Exception:
         d["checks"] = {}
     try:
-        d["recommendations"] = json.loads(d.get("recommendations_json", "[]"))
+        d["recommendations"] = json.loads(d.get("recommendations_json", "[]")) or []
     except Exception:
         d["recommendations"] = []
+    try:
+        d["geo"] = json.loads(d.get("geo_json") or "{}") or {}
+    except Exception:
+        d["geo"] = {}
     return d
 
 

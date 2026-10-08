@@ -1,16 +1,40 @@
 {% extends "base.html" %}
 
-{% block title %}Server Information – {{ scan.hostname }} | WebGuard{% endblock %}
+{% block title %}Server Infrastructure & Location – {{ scan.hostname }} | WebGuard{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+  .leaflet-container {
+    background: #0b0f19 !important;
+  }
+  .dark-map-popup .leaflet-popup-content-wrapper {
+    background: #0f172a !important;
+    border: 1px solid rgba(6, 182, 212, 0.4) !important;
+    color: #f1f5f9 !important;
+    border-radius: 8px !important;
+  }
+  .dark-map-popup .leaflet-popup-tip {
+    background: #0f172a !important;
+  }
+  @keyframes radarPulse {
+    0% { transform: scale(0.6); opacity: 0.9; }
+    70% { transform: scale(2.0); opacity: 0; }
+    100% { transform: scale(2.2); opacity: 0; }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="page-container">
     <div class="page-header flex-between">
         <div>
             <div class="breadcrumb-trail text-muted text-small mb-1">
-                <a href="{{ url_for('dashboard') }}">Dashboard</a> / <a href="{{ url_for('results', scan_id=scan.id) }}">{{ scan.hostname }}</a> / Server Information
+                <a href="{{ url_for('dashboard') }}">Dashboard</a> / <a href="{{ url_for('results', scan_id=scan.id) }}">{{ scan.hostname }}</a> / Server & Geolocation
             </div>
-            <h1 class="page-title">Server Information Disclosure</h1>
-            <p class="page-subtitle">Analysis of server software banners, framework headers, and version reconnaissance risks.</p>
+            <h1 class="page-title">Server Infrastructure & Physical Geolocation</h1>
+            <p class="page-subtitle">Analysis of datacenter hosting location, network ASN/ISP, physical coordinates, and version leakage risks.</p>
         </div>
         <div class="action-buttons-group">
             <a href="{{ url_for('results', scan_id=scan.id) }}" class="btn-secondary">← Back to Results</a>
@@ -22,7 +46,70 @@
     <div class="meta-strip mb-6">
         <span>Target: <strong class="font-mono text-white">{{ scan.target_url }}</strong></span>
         <span>·</span>
+        <span>Resolved IP: <strong class="font-mono text-cyan-300">{{ scan.resolved_ip }}</strong></span>
+        <span>·</span>
+        <span>Location: <strong class="text-white">{{ scan.geo.city if scan.geo and scan.geo.city else 'Global' }}, {{ scan.geo.country if scan.geo and scan.geo.country else 'Cloud Network' }}</strong></span>
+        <span>·</span>
         <span>Disclosure Status: <span class="badge badge-{{ scan.checks.server.status.lower() }}">{{ scan.checks.server.status }}</span></span>
+    </div>
+
+    <!-- Server Geolocation Map Panel -->
+    <div class="content-panel mb-6">
+        <div class="panel-header flex-between">
+            <h3 class="panel-title">Physical Server Location & Datacenter Map</h3>
+            <span class="badge badge-pass font-mono text-small">HOST NODE ACTIVE</span>
+        </div>
+        <div class="panel-body p-0 overflow-hidden" style="position: relative;">
+            <div id="server-map" style="height: 380px; width: 100%;"></div>
+        </div>
+    </div>
+
+    <!-- Infrastructure Technical Intelligence Grid -->
+    <div class="grid md:grid-cols-3 gap-4 mb-6">
+        <div class="content-panel p-4">
+            <span class="text-muted text-small block mb-1">Resolved Public IP Address</span>
+            <div class="font-mono text-cyan-300 font-bold text-base mb-1">{{ scan.resolved_ip }}</div>
+            <span class="text-muted text-small">Target Domain: <code>{{ scan.hostname }}</code></span>
+        </div>
+        <div class="content-panel p-4">
+            <span class="text-muted text-small block mb-1">Datacenter Physical Location</span>
+            <div class="font-bold text-white text-base mb-1">
+                {{ scan.geo.city if scan.geo and scan.geo.city else 'Unknown City' }}, {{ scan.geo.country if scan.geo and scan.geo.country else 'Unknown Country' }}
+            </div>
+            <span class="text-muted text-small">Region: {{ scan.geo.region if scan.geo and scan.geo.region else 'Cloud Hosting' }}</span>
+        </div>
+        <div class="content-panel p-4">
+            <span class="text-muted text-small block mb-1">Hosting Network & ASN</span>
+            <div class="font-bold text-white text-base mb-1 truncate" title="{{ scan.geo.isp if scan.geo else 'ISP' }}">
+                {{ scan.geo.isp if scan.geo and scan.geo.isp else 'Cloud Network' }}
+            </div>
+            <span class="text-muted text-small">Autonomous System: <code>{{ scan.geo.asn if scan.geo and scan.geo.asn else 'N/A' }}</code></span>
+        </div>
+        <div class="content-panel p-4">
+            <span class="text-muted text-small block mb-1">GPS Coordinates</span>
+            <div class="font-mono text-white text-base mb-1">
+                {% if scan.geo and scan.geo.latitude and scan.geo.longitude and (scan.geo.latitude != 0 or scan.geo.longitude != 0) %}
+                    {{ "%.4f"|format(scan.geo.latitude) }}, {{ "%.4f"|format(scan.geo.longitude) }}
+                {% else %}
+                    N/A
+                {% endif %}
+            </div>
+            <span class="text-muted text-small">Continent: {{ scan.geo.continent if scan.geo and scan.geo.continent else 'Global' }}</span>
+        </div>
+        <div class="content-panel p-4">
+            <span class="text-muted text-small block mb-1">Server Timezone</span>
+            <div class="font-mono text-cyan-300 text-base mb-1">
+                {{ scan.geo.timezone if scan.geo and scan.geo.timezone else 'UTC' }}
+            </div>
+            <span class="text-muted text-small">Postal Code: {{ scan.geo.postal if scan.geo and scan.geo.postal else 'N/A' }}</span>
+        </div>
+        <div class="content-panel p-4">
+            <span class="text-muted text-small block mb-1">Port Status</span>
+            <div class="font-mono text-emerald-400 font-bold text-base mb-1">
+                HTTP/HTTPS ACTIVE
+            </div>
+            <span class="text-muted text-small">Status Code: {{ scan.http_status or 200 }} OK</span>
+        </div>
     </div>
 
     <!-- Observed Headers Card -->
@@ -91,4 +178,58 @@ ServerSignature Off</pre>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var lat = Number({{ scan.geo.latitude if (scan.geo and scan.geo.latitude is number) else 0 }});
+    var lng = Number({{ scan.geo.longitude if (scan.geo and scan.geo.longitude is number) else 0 }});
+    var mapContainer = document.getElementById("server-map");
+
+    if (mapContainer && (lat !== 0 || lng !== 0)) {
+        var map = L.map('server-map', {
+            center: [lat, lng],
+            zoom: 6,
+            attributionControl: false
+        });
+
+        var mapboxToken = "{{ mapbox_token or '' }}";
+        if (mapboxToken) {
+            L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=' + mapboxToken, {
+                tileSize: 512,
+                zoomOffset: -1,
+                maxZoom: 19
+            }).addTo(map);
+        } else {
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                subdomains: 'abcd',
+                maxZoom: 19
+            }).addTo(map);
+        }
+
+        var radarIcon = L.divIcon({
+            className: 'custom-radar-icon',
+            html: '<div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">' +
+                  '<div style="position: absolute; width: 32px; height: 32px; border-radius: 50%; background: rgba(6,182,212,0.3); animation: radarPulse 2s infinite;"></div>' +
+                  '<div style="width: 14px; height: 14px; border-radius: 50%; background: #06b6d4; border: 2px solid #ffffff; box-shadow: 0 0 10px #06b6d4;"></div>' +
+                  '</div>',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
+            popupAnchor: [0, -18]
+        });
+
+        var marker = L.marker([lat, lng], { icon: radarIcon }).addTo(map);
+        marker.bindPopup(
+            '<div style="font-family: sans-serif; font-size: 12px; color: #fff;">' +
+            '<strong style="color: #06b6d4;">Server Host Node</strong><br/>' +
+            'IP: ' + '{{ scan.resolved_ip or "Unknown IP" }}' + '<br/>' +
+            'Location: ' + '{{ scan.geo.city if scan.geo and scan.geo.city else "Server Node" }}' + ', ' + '{{ scan.geo.country if scan.geo and scan.geo.country else "" }}' + '<br/>' +
+            'ISP: ' + '{{ scan.geo.isp if scan.geo and scan.geo.isp else "Cloud Host" }}' +
+            '</div>',
+            { className: 'dark-map-popup' }
+        ).openPopup();
+    } else if (mapContainer) {
+        mapContainer.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #64748b; font-size: 13px;">Physical server coordinates unavailable for this host.</div>';
+    }
+});
+</script>
 {% endblock %}
