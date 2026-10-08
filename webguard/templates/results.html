@@ -12,6 +12,10 @@
                 <h1 class="banner-target-title font-mono">{{ scan.target_url }}</h1>
                 <div class="meta-inline-tags">
                     <span>Resolved IP: <strong class="font-mono text-cyan-300">{{ scan.resolved_ip }}</strong></span>
+                    {% if scan.reverse_dns %}
+                    <span>·</span>
+                    <span>Reverse DNS (PTR): <strong class="font-mono text-white">{{ scan.reverse_dns }}</strong></span>
+                    {% endif %}
                     {% if scan.geo and scan.geo.country %}
                     <span>·</span>
                     <span>Server Location: <strong class="text-white">{{ scan.geo.city + ', ' if scan.geo.city else '' }}{{ scan.geo.country }}</strong></span>

@@ -90,13 +90,28 @@ async function runTests() {
     assert(json.error.includes('SSRF Protection'), 'Expected SSRF error');
   });
 
-  await test('POST /api/scan blocks cloud metadata hostname with 403 (SSRF)', async () => {
+  await test('POST /api/scan blocks private IP literal 192.168.1.5 with 403 (SSRF)', async () => {
     const res = await fetch(`${baseUrl}/api/scan`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: 'http://metadata.google.internal' }),
+      body: JSON.stringify({ url: '192.168.1.5' }),
     });
     assert(res.status === 403, `Expected 403, got ${res.status}`);
+    const json = await res.json();
+    assert(json.error.includes('SSRF Protection'), 'Expected SSRF error');
+  });
+
+  await test('POST /api/scan allows scanning public IP 8.8.8.8 and returns report', async () => {
+    const res = await fetch(`${baseUrl}/api/scan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: '8.8.8.8' }),
+    });
+    assert(res.status === 200, `Expected 200, got ${res.status}`);
+    const json = await res.json();
+    assert(json.resolved_ip === '8.8.8.8', 'Expected resolved_ip 8.8.8.8');
+    assert(json.is_ip === true, 'Expected is_ip true');
+    assert(typeof json.score === 'number', 'Expected numeric score');
   });
 
   await test('GET /api/scans/:id rejects non-integer IDs with 400 (RCE protection)', async () => {

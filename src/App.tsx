@@ -310,15 +310,32 @@ export default function App() {
     doc.text(`Target URL: ${scan.target_url}`, 15, y);
     doc.text(`Resolved IP: ${scan.resolved_ip || 'N/A'}`, 120, y);
     y += 6;
-    doc.text(`HTTP Status Code: ${scan.http_status ?? '200'}`, 15, y);
-    const serverLoc = scan.geo?.country
-      ? `${scan.geo.city ? `${scan.geo.city}, ` : ''}${scan.geo.country}`
-      : 'N/A';
-    doc.text(`Server Location: ${serverLoc}`, 120, y);
-    y += 6;
-    doc.text(`Execution Duration: ${scan.scan_duration}`, 15, y);
-    doc.text(`Hosting ISP: ${scan.geo?.isp || 'N/A'}`, 120, y);
-    y += 12;
+    if (scan.reverse_dns) {
+      doc.text(`Reverse DNS (PTR): ${scan.reverse_dns}`, 15, y);
+      doc.text(`HTTP Status Code: ${scan.http_status ?? 'No Web Daemon'}`, 120, y);
+      y += 6;
+    } else {
+      doc.text(`HTTP Status Code: ${scan.http_status ?? '200'}`, 15, y);
+      const serverLoc = scan.geo?.country
+        ? `${scan.geo.city ? `${scan.geo.city}, ` : ''}${scan.geo.country}`
+        : 'N/A';
+      doc.text(`Server Location: ${serverLoc}`, 120, y);
+      y += 6;
+    }
+    if (scan.reverse_dns) {
+      const serverLoc = scan.geo?.country
+        ? `${scan.geo.city ? `${scan.geo.city}, ` : ''}${scan.geo.country}`
+        : 'N/A';
+      doc.text(`Server Location: ${serverLoc}`, 15, y);
+      doc.text(`Hosting ISP: ${scan.geo?.isp || 'N/A'}`, 120, y);
+      y += 6;
+      doc.text(`Execution Duration: ${scan.scan_duration}`, 15, y);
+      y += 6;
+    } else {
+      doc.text(`Execution Duration: ${scan.scan_duration}`, 15, y);
+      doc.text(`Hosting ISP: ${scan.geo?.isp || 'N/A'}`, 120, y);
+      y += 12;
+    }
 
     // Score & Risk Level Summary Box
     doc.setFillColor(241, 245, 249);
@@ -1065,6 +1082,17 @@ export default function App() {
                         {activeScan.resolved_ip}
                       </strong>
                     </span>
+                    {activeScan.reverse_dns && (
+                      <>
+                        <span>·</span>
+                        <span className="flex items-center gap-1.5">
+                          <span>PTR:</span>
+                          <strong className="text-cyan-300 font-mono bg-cyan-950/40 border border-cyan-500/20 px-2 py-0.5 rounded">
+                            {activeScan.reverse_dns}
+                          </strong>
+                        </span>
+                      </>
+                    )}
                     {activeScan.geo?.country && (
                       <>
                         <span>·</span>
@@ -1831,18 +1859,26 @@ export default function App() {
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
                 <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
-                  RESOLVED PUBLIC IP
+                  {activeScan.is_ip ? 'TARGET PUBLIC IP' : 'RESOLVED PUBLIC IP'}
                 </span>
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-cyan-300 font-bold text-base">
                     {activeScan.resolved_ip}
                   </span>
                   <span className="text-[10px] font-mono bg-cyan-950/80 border border-cyan-500/30 text-cyan-400 px-2 py-0.5 rounded">
-                    IPv4
+                    {activeScan.is_ip ? 'DIRECT IP' : 'IPv4 / IPv6'}
                   </span>
                 </div>
                 <span className="text-[11px] text-slate-500 mt-1 block">
-                  DNS Target: <code className="text-slate-400">{activeScan.hostname}</code>
+                  {activeScan.reverse_dns ? (
+                    <>
+                      Reverse DNS (PTR): <code className="text-cyan-300 font-mono">{activeScan.reverse_dns}</code>
+                    </>
+                  ) : (
+                    <>
+                      DNS Target: <code className="text-slate-400">{activeScan.hostname}</code>
+                    </>
+                  )}
                 </span>
               </div>
 
@@ -1906,13 +1942,23 @@ export default function App() {
                   HTTP TRANSPORT STATUS
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span className="font-mono text-emerald-400 font-bold text-sm">
-                    PORT 443 ACTIVE
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      activeScan.http_status ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
+                    }`}
+                  ></span>
+                  <span
+                    className={`font-mono font-bold text-sm ${
+                      activeScan.http_status ? 'text-emerald-400' : 'text-slate-400'
+                    }`}
+                  >
+                    {activeScan.http_status ? `HTTP ${activeScan.http_status} ACTIVE` : 'NO WEB DAEMON'}
                   </span>
                 </div>
                 <span className="text-[11px] text-slate-500 mt-1 block">
-                  Response Code: {activeScan.http_status ?? 200} OK
+                  {activeScan.http_status
+                    ? `Response Code: ${activeScan.http_status}`
+                    : 'Non-HTTP Service / Ports Closed'}
                 </span>
               </div>
             </div>

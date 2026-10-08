@@ -58,15 +58,25 @@ def generate_pdf_report(scan_data):
         location_str = ", ".join(loc_parts) if loc_parts else "N/A"
         isp_str = geo.get("isp") or "N/A"
 
-        c.drawString(40, y, f"Target Website: {scan_data.get('target_url')}")
+        c.drawString(40, y, f"Target: {scan_data.get('target_url')}")
         c.drawString(330, y, f"Resolved IP Address: {scan_data.get('resolved_ip', 'N/A')}")
         y -= 14
-        c.drawString(40, y, f"HTTP Status: {scan_data.get('http_status', 'N/A')}")
-        c.drawString(330, y, f"Server Location: {location_str}")
-        y -= 14
-        c.drawString(40, y, f"Scan Execution Duration: {scan_data.get('scan_duration', 'N/A')}")
-        c.drawString(330, y, f"Hosting ISP / Network: {isp_str[:28]}")
-        y -= 25
+        if scan_data.get("reverse_dns"):
+            c.drawString(40, y, f"Reverse DNS (PTR): {scan_data.get('reverse_dns')}")
+            c.drawString(330, y, f"HTTP Status: {scan_data.get('http_status', 'No Web Daemon')}")
+            y -= 14
+            c.drawString(40, y, f"Server Location: {location_str}")
+            c.drawString(330, y, f"Hosting ISP / Network: {isp_str[:28]}")
+            y -= 14
+            c.drawString(40, y, f"Scan Execution Duration: {scan_data.get('scan_duration', 'N/A')}")
+            y -= 25
+        else:
+            c.drawString(40, y, f"HTTP Status: {scan_data.get('http_status', 'N/A')}")
+            c.drawString(330, y, f"Server Location: {location_str}")
+            y -= 14
+            c.drawString(40, y, f"Scan Execution Duration: {scan_data.get('scan_duration', 'N/A')}")
+            c.drawString(330, y, f"Hosting ISP / Network: {isp_str[:28]}")
+            y -= 25
 
         # Score & Risk Box
         score = scan_data.get("score", 0)

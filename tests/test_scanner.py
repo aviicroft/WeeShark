@@ -21,7 +21,9 @@ from scanner import (
     check_ports,
     calculate_score,
     generate_recommendations,
-    SafeRedirectHandler
+    SafeRedirectHandler,
+    get_reverse_dns,
+    scan_target
 )
 
 
@@ -238,4 +240,37 @@ class TestScoringAndRecommendations:
         assert 'Encryption & Transport' in categories
         assert 'HTTP Security Headers' in categories
         assert 'Port Exposure' in categories
+
+
+class TestIPScanning:
+    def test_public_ip_validation(self):
+        url, host, ip = validate_url("8.8.8.8")
+        assert host == "8.8.8.8"
+        assert ip == "8.8.8.8"
+        assert url == "https://8.8.8.8"
+
+    def test_public_ip_with_http_scheme(self):
+        url, host, ip = validate_url("http://104.21.5.12")
+        assert host == "104.21.5.12"
+        assert ip == "104.21.5.12"
+        assert url == "http://104.21.5.12"
+
+    def test_private_ip_target_blocked(self):
+        with pytest.raises(ValueError, match="SSRF Protection"):
+            validate_url("192.168.1.1")
+        with pytest.raises(ValueError, match="SSRF Protection"):
+            validate_url("10.0.0.5")
+        with pytest.raises(ValueError, match="SSRF Protection"):
+            validate_url("127.0.0.1")
+
+    def test_get_reverse_dns_public(self):
+        ptr = get_reverse_dns("8.8.8.8")
+        assert ptr is not None
+        assert "google" in ptr.lower()
+
+    def test_get_reverse_dns_restricted_returns_none(self):
+        assert get_reverse_dns("127.0.0.1") is None
+        assert get_reverse_dns("10.0.0.1") is None
+        assert get_reverse_dns("") is None
+
 

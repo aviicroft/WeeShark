@@ -18,12 +18,12 @@
         <!-- Scan Form -->
         <form id="liveScanForm" action="{{ url_for('scan') }}" method="POST" class="scan-form-box">
             <div class="url-input-group">
-                <span class="url-protocol-prefix">https://</span>
+                <span class="url-protocol-prefix">Target:</span>
                 <input 
                     type="text" 
                     name="target_url" 
                     id="scanTargetInput" 
-                    placeholder="example.com" 
+                    placeholder="example.com or 104.21.5.12 (Public IP)" 
                     required 
                     autocomplete="off"
                     spellcheck="false"
@@ -39,8 +39,8 @@
             <span class="quick-title">Quick safe test targets:</span>
             <button type="button" class="chip-btn" onclick="fillTarget('https://example.com')">example.com</button>
             <button type="button" class="chip-btn" onclick="fillTarget('https://cloudflare.com')">cloudflare.com</button>
+            <button type="button" class="chip-btn" onclick="fillTarget('104.21.5.12')">104.21.5.12 (Public IP)</button>
             <button type="button" class="chip-btn" onclick="fillTarget('https://github.com')">github.com</button>
-            <button type="button" class="chip-btn" onclick="fillTarget('https://wikipedia.org')">wikipedia.org</button>
         </div>
 
         <!-- Live Scan Progress Card (Displays on submit) -->
