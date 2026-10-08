@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}WebGuard – Real-Time Web Security Assessment{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="site-layout">
+        <!-- Top Navigation Bar (Multi-Page Route Links) -->
+        <header class="app-header">
+            <div class="header-inner">
+                <!-- Zone 1: Wordmark -->
+                <a href="{{ url_for('dashboard') }}" class="brand-link">
+                    <span class="brand-icon">🛡️</span>
+                    <span class="brand-text">WEBGUARD</span>
+                </a>
+
+                <!-- Zone 2: Multi-Page Navigation -->
+                <nav class="nav-menu">
+                    <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">Dashboard</a>
+                    <a href="{{ url_for('scan') }}" class="nav-item {% if request.endpoint == 'scan' %}active{% endif %}">New Scan</a>
+                    <a href="{{ url_for('results', scan_id=latest_scan_id) }}" class="nav-item {% if request.endpoint == 'results' %}active{% endif %}">Scan Results</a>
+                    <a href="{{ url_for('headers', scan_id=latest_scan_id) }}" class="nav-item {% if request.endpoint == 'headers' %}active{% endif %}">Security Headers</a>
+                    <a href="{{ url_for('cookies', scan_id=latest_scan_id) }}" class="nav-item {% if request.endpoint == 'cookies' %}active{% endif %}">Cookie Security</a>
+                    <a href="{{ url_for('ports', scan_id=latest_scan_id) }}" class="nav-item {% if request.endpoint == 'ports' %}active{% endif %}">Port Analysis</a>
+                    <a href="{{ url_for('server_info', scan_id=latest_scan_id) }}" class="nav-item {% if request.endpoint == 'server_info' %}active{% endif %}">Server Information</a>
+                    <a href="{{ url_for('history') }}" class="nav-item {% if request.endpoint == 'history' %}active{% endif %}">Scan History</a>
+                    <a href="{{ url_for('reports') }}" class="nav-item {% if request.endpoint == 'reports' %}active{% endif %}">Reports</a>
+                </nav>
+
+                <!-- Zone 3: Live Status Badge -->
+                <div class="header-actions">
+                    <span class="live-pill">
+                        <span class="live-dot"></span>
+                        LIVE SCANNER
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Body Viewport -->
+        <main class="app-main">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="alerts-container">
+                        {% for category, message in messages %}
+                            <div class="alert-box alert-{{ category }}">
+                                <span class="alert-text">{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-inner">
+                <p>WebGuard · Multi-Page Real-Time Web Security Assessment · SSRF Protected · Passive TCP/TLS Auditing</p>
+                <p class="footer-sub">Authorized Use Only: Test only websites you own or have permission to audit.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

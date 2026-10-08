@@ -1,0 +1,32 @@
+[
+  {
+    "target_url": "https://vercel.com",
+    "hostname": "vercel.com",
+    "score": 91,
+    "risk_level": "EXCELLENT",
+    "badge_color": "emerald",
+    "scan_date": "08 October 2026",
+    "scan_time": "09:43:24 PM",
+    "scan_duration": "1.52s"
+  },
+  {
+    "target_url": "https://google.com",
+    "hostname": "google.com",
+    "score": 71,
+    "risk_level": "MEDIUM",
+    "badge_color": "amber",
+    "scan_date": "08 October 2026",
+    "scan_time": "09:42:58 PM",
+    "scan_duration": "1.71s"
+  },
+  {
+    "target_url": "https://example.com",
+    "hostname": "example.com",
+    "score": 62,
+    "risk_level": "MEDIUM",
+    "badge_color": "amber",
+    "scan_date": "08 October 2026",
+    "scan_time": "09:18:19 PM",
+    "scan_duration": "1.4s"
+  }
+]

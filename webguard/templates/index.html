@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGuard – Real-Time Web Security Assessment</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="site-container">
+        <!-- Top Navigation -->
+        <header class="top-nav">
+            <div class="brand">
+                <span class="brand-shield">🛡️</span>
+                <span class="brand-title">WEBGUARD</span>
+            </div>
+            <div class="nav-meta">
+                <span class="live-indicator">LIVE SCANNER</span>
+            </div>
+        </header>
+
+        <!-- Hero & Scanner Form -->
+        <main class="main-content">
+            <section class="scanner-hero">
+                <h1 class="hero-title">Real-Time Web Security Assessment</h1>
+                <p class="hero-subtitle">Perform passive non-destructive security audits: SSL/TLS validation, HTTP response headers, cookie flags, port hygiene, and dynamic scoring.</p>
+
+                <!-- Ethical Notice -->
+                <div class="notice-card">
+                    <span class="notice-icon">⚠️</span>
+                    <span class="notice-text">Notice: Use WebGuard only on websites you own or have permission to test. Passive analysis only.</span>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                <span>{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Scan Input Form -->
+                <form id="scanForm" action="{{ url_for('scan') }}" method="POST" class="scan-form">
+                    <div class="input-wrapper">
+                        <span class="input-prefix">https://</span>
+                        <input 
+                            type="text" 
+                            name="target_url" 
+                            id="targetUrl" 
+                            placeholder="example.com" 
+                            required 
+                            autocomplete="off"
+                            spellcheck="false"
+                        >
+                    </div>
+                    <button type="submit" id="scanBtn" class="btn-scan">
+                        <span class="btn-text">START SECURITY SCAN</span>
+                    </button>
+                </form>
+
+                <!-- Quick Test Preset Links -->
+                <div class="quick-targets">
+                    <span class="quick-label">Try safe targets:</span>
+                    <button type="button" class="preset-btn" onclick="setTarget('https://example.com')">example.com</button>
+                    <button type="button" class="preset-btn" onclick="setTarget('https://cloudflare.com')">cloudflare.com</button>
+                    <button type="button" class="preset-btn" onclick="setTarget('https://github.com')">github.com</button>
+                </div>
+
+                <!-- Scan Loading State (Visible on submission) -->
+                <div id="loadingBox" class="loading-container hidden">
+                    <div class="loader-spinner"></div>
+                    <div class="loading-status-text" id="statusStep">Scanning target...</div>
+                    <div class="progress-bar-wrap">
+                        <div id="progressBar" class="progress-bar-fill"></div>
+                    </div>
+                    <div class="loading-steps-list">
+                        <div class="step-item" id="step1">✓ Validating URL & SSRF boundaries</div>
+                        <div class="step-item" id="step2">⏳ Connecting & checking HTTPS...</div>
+                        <div class="step-item" id="step3">⏳ Analyzing security headers...</div>
+                        <div class="step-item" id="step4">⏳ Checking cookies...</div>
+                        <div class="step-item" id="step5">⏳ Checking server information...</div>
+                        <div class="step-item" id="step6">⏳ Checking allowed common ports...</div>
+                        <div class="step-item" id="step7">⏳ Calculating security score...</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Scan History Section -->
+            {% if history %}
+            <section class="history-section">
+                <div class="section-header">
+                    <h2>Recent Scan History</h2>
+                    <span class="history-badge">Live Record</span>
+                </div>
+                <div class="history-grid">
+                    {% for item in history %}
+                    <div class="history-card">
+                        <div class="history-target">
+                            <span class="history-url">{{ item.target_url }}</span>
+                            <span class="history-time">{{ item.scan_date }} · {{ item.scan_time }}</span>
+                        </div>
+                        <div class="history-stats">
+                            <div class="history-score-wrap">
+                                <span class="history-score-val">{{ item.score }}</span>
+                                <span class="history-score-denom">/100</span>
+                            </div>
+                            <span class="risk-badge risk-{{ item.badge_color }}">{{ item.risk_level }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="site-footer">
+            <p>WebGuard · Passive Web Security Assessment Engine · Real-time socket & header auditing</p>
+        </footer>
+    </div>
+
+    <script>
+        function setTarget(url) {
+            document.getElementById('targetUrl').value = url;
+            document.getElementById('targetUrl').focus();
+        }
+
+        const scanForm = document.getElementById('scanForm');
+        const loadingBox = document.getElementById('loadingBox');
+        const statusStep = document.getElementById('statusStep');
+        const progressBar = document.getElementById('progressBar');
+        const scanBtn = document.getElementById('scanBtn');
+
+        const scanStages = [
+            { text: "Scanning target...", progress: "15%", stepId: "step1" },
+            { text: "Checking HTTPS...", progress: "30%", stepId: "step2" },
+            { text: "Analyzing security headers...", progress: "50%", stepId: "step3" },
+            { text: "Checking cookies...", progress: "65%", stepId: "step4" },
+            { text: "Checking server information...", progress: "80%", stepId: "step5" },
+            { text: "Checking allowed common ports...", progress: "92%", stepId: "step6" },
+            { text: "Calculating security score...", progress: "98%", stepId: "step7" }
+        ];
+
+        scanForm.addEventListener('submit', function() {
+            loadingBox.classList.remove('hidden');
+            scanBtn.disabled = true;
+            scanBtn.classList.add('btn-disabled');
+
+            let current = 0;
+            const interval = setInterval(() => {
+                if (current < scanStages.length) {
+                    const stage = scanStages[current];
+                    statusStep.textContent = stage.text;
+                    progressBar.style.width = stage.progress;
+
+                    const el = document.getElementById(stage.stepId);
+                    if (el) {
+                        el.textContent = "✓ " + el.textContent.replace("⏳ ", "");
+                        el.classList.add('step-complete');
+                    }
+                    current++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 350);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Security Headers Analysis – {{ scan.hostname }} | WebGuard{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header flex-between">
+        <div>
+            <div class="breadcrumb-trail text-muted text-small mb-1">
+                <a href="{{ url_for('dashboard') }}">Dashboard</a> / <a href="{{ url_for('results', scan_id=scan.id) }}">{{ scan.hostname }}</a> / Security Headers
+            </div>
+            <h1 class="page-title">HTTP Security Headers Analysis</h1>
+            <p class="page-subtitle">Deep dive inspection of modern browser defenses against XSS, clickjacking, MIME sniffing, and SSL stripping.</p>
+        </div>
+        <div class="action-buttons-group">
+            <a href="{{ url_for('results', scan_id=scan.id) }}" class="btn-secondary">← Back to Results</a>
+            <a href="{{ url_for('download_pdf', scan_id=scan.id) }}" class="btn-primary">Download PDF</a>
+        </div>
+    </div>
+
+    <!-- Target Meta Strip -->
+    <div class="meta-strip mb-6">
+        <span>Target: <strong class="font-mono text-white">{{ scan.target_url }}</strong></span>
+        <span>·</span>
+        <span>Scan Date: <strong class="font-mono text-white">{{ scan.scan_date }} at {{ scan.scan_time }}</strong></span>
+        <span>·</span>
+        <span>Score: <strong class="font-mono text-cyan">{{ scan.score }}/100</strong></span>
+    </div>
+
+    <!-- Headers Grid Breakdown -->
+    <div class="headers-deep-list mb-8">
+        {% for h in scan.checks.headers %}
+        <div class="content-panel mb-4">
+            <div class="panel-header flex-between">
+                <div class="flex items-center gap-3">
+                    <span class="font-mono text-cyan font-bold text-base">{{ h.header }}</span>
+                </div>
+                <span class="badge badge-{{ 'pass' if h.status == 'Present' else 'warning' }}">
+                    {{ h.status }}
+                </span>
+            </div>
+            <div class="panel-body">
+                <div class="header-property-row mb-3">
+                    <span class="prop-key">OBSERVED VALUE IN RESPONSE:</span>
+                    <pre class="font-mono prop-value-box">{{ h.value }}</pre>
+                </div>
+                <div class="header-property-row mb-3">
+                    <span class="prop-key">DEFENSIVE PURPOSE:</span>
+                    <p class="text-slate-300 text-small">
+                        {% if h.header == 'Content-Security-Policy' %}
+                            Content Security Policy restricts resources (JavaScript, CSS, Images) that the browser is allowed to load for the page, acting as the primary defense against Cross-Site Scripting (XSS) and data injection.
+                        {% elif h.header == 'X-Frame-Options' %}
+                            Instructs browsers whether the site can be rendered inside a &lt;frame&gt;, &lt;iframe&gt;, or &lt;object&gt;, preventing Clickjacking attacks where attackers trick users into clicking invisible overlay buttons.
+                        {% elif h.header == 'X-Content-Type-Options' %}
+                            Setting 'nosniff' prevents browsers from MIME-sniffing a response away from the declared content-type, blocking script execution disguised as benign images or styles.
+                        {% elif h.header == 'Strict-Transport-Security' %}
+                            HTTP Strict Transport Security (HSTS) enforces that all future connections must strictly use HTTPS, preventing man-in-the-middle SSL-stripping attacks.
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="header-property-row">
+                    <span class="prop-key">ACTIONABLE RECOMMENDATION:</span>
+                    <p class="rec-highlight-box">{{ h.recommendation }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

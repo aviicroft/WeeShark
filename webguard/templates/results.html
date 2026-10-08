@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}Results – {{ scan.hostname }} | WebGuard{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <!-- Results Header / Metadata Banner -->
+    <div class="meta-banner-card mb-6">
+        <div class="flex-between">
+            <div>
+                <span class="banner-kicker">REAL-TIME ASSESSMENT RESULT</span>
+                <h1 class="banner-target-title font-mono">{{ scan.target_url }}</h1>
+                <div class="meta-inline-tags">
+                    <span>Resolved IP: <strong class="font-mono text-white">{{ scan.resolved_ip }}</strong></span>
+                    <span>·</span>
+                    <span>HTTP Status: <strong class="font-mono text-white">{{ scan.http_status or '200' }}</strong></span>
+                    <span>·</span>
+                    <span>Scan Date: <strong class="font-mono text-white">{{ scan.scan_date }}</strong></span>
+                    <span>·</span>
+                    <span>Scan Time: <strong class="font-mono text-white">{{ scan.scan_time }}</strong></span>
+                    <span>·</span>
+                    <span>Scan Duration: <strong class="font-mono text-white">{{ scan.scan_duration }}</strong></span>
+                </div>
+            </div>
+
+            <div class="flex-actions shrink-0">
+                <a href="{{ url_for('scan') }}" class="btn-secondary">New Scan</a>
+                <a href="{{ url_for('download_pdf', scan_id=scan.id) }}" class="btn-primary">Download PDF Report</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Score & Risk Summary Cards -->
+    <div class="results-score-grid mb-6">
+        <div class="content-panel score-panel">
+            <span class="panel-kicker">SECURITY SCORE</span>
+            <div class="score-number-row">
+                <span class="score-large font-mono">{{ scan.score }}</span>
+                <span class="score-total font-mono">/ 100</span>
+            </div>
+            <div class="score-meter">
+                <div class="score-meter-fill bg-{{ scan.badge_color }}" style="width: {{ scan.score }}%;"></div>
+            </div>
+            <p class="score-caption">Calculated dynamically from live transport, response headers, cookie flags, and port hygiene.</p>
+        </div>
+
+        <div class="content-panel risk-panel">
+            <span class="panel-kicker">ASSESSED RISK LEVEL</span>
+            <div class="risk-level-heading risk-text-{{ scan.badge_color }}">
+                {{ scan.risk_level }}
+            </div>
+            <p class="risk-explanation">
+                {% if scan.risk_level == 'EXCELLENT' %}
+                    Strong defensive posture. Essential TLS transport encryption and modern defensive headers are in place.
+                {% elif scan.risk_level == 'GOOD' %}
+                    Good baseline security. Primary encryption is active; minor header directives or cookie attributes can be tightened.
+                {% elif scan.risk_level == 'MEDIUM' %}
+                    Moderate security risk. Several browser defense headers (such as CSP or HSTS) or cookie flags are missing.
+                {% else %}
+                    Critical vulnerability exposure. Core transport security or critical defense headers are unconfigured.
+                {% endif %}
+            </p>
+            <div class="deep-links-row mt-4">
+                <a href="{{ url_for('headers', scan_id=scan.id) }}" class="link-pill">Headers Deep Dive →</a>
+                <a href="{{ url_for('cookies', scan_id=scan.id) }}" class="link-pill">Cookies Deep Dive →</a>
+                <a href="{{ url_for('ports', scan_id=scan.id) }}" class="link-pill">Ports Deep Dive →</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5 Distinct Security Check Cards -->
+    <div class="checks-deck mb-6">
+        <h2 class="section-heading mb-4">Security Checks Breakdown</h2>
+
+        <!-- Card A: HTTPS -->
+        <div class="content-panel mb-4">
+            <div class="panel-header flex-between">
+                <div class="check-title-group">
+                    <span class="check-icon">🔒</span>
+                    <div>
+                        <h3 class="panel-title">A. HTTPS & Transport Security</h3>
+                        <p class="panel-subtitle">TLS protocol version, cipher handshake, and certificate authority</p>
+                    </div>
+                </div>
+                <span class="badge badge-{{ scan.checks.https.status.lower() }}">{{ scan.checks.https.status }}</span>
+            </div>
+            <div class="panel-body">
+                <p class="check-summary-text">{{ scan.checks.https.message }}</p>
+                <div class="kv-grid">
+                    <div class="kv-box">
+                        <span class="kv-title">TLS Protocol</span>
+                        <span class="kv-value font-mono">{{ scan.checks.https.tls_version }}</span>
+                    </div>
+                    <div class="kv-box">
+                        <span class="kv-title">Certificate Issuer</span>
+                        <span class="kv-value font-mono">{{ scan.checks.https.issuer }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card B: Security Headers -->
+        <div class="content-panel mb-4">
+            <div class="panel-header flex-between">
+                <div class="check-title-group">
+                    <span class="check-icon">🛡️</span>
+                    <div>
+                        <h3 class="panel-title">B. HTTP Security Headers</h3>
+                        <p class="panel-subtitle">CSP, X-Frame-Options, X-Content-Type-Options, and Strict-Transport-Security</p>
+                    </div>
+                </div>
+                <a href="{{ url_for('headers', scan_id=scan.id) }}" class="btn-secondary btn-small">Detailed Analysis →</a>
+            </div>
+            <div class="panel-body p-0">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Header</th>
+                            <th>Status</th>
+                            <th>Observed Value</th>
+                            <th>Recommendation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in scan.checks.headers %}
+                        <tr>
+                            <td class="font-mono text-cyan font-semibold">{{ h.header }}</td>
+                            <td>
+                                <span class="badge badge-{{ 'pass' if h.status == 'Present' else 'warning' }}">
+                                    {{ h.status }}
+                                </span>
+                            </td>
+                            <td class="font-mono text-muted text-small">{{ h.value }}</td>
+                            <td class="text-small">{{ h.recommendation }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Card C: Cookie Security -->
+        <div class="content-panel mb-4">
+            <div class="panel-header flex-between">
+                <div class="check-title-group">
+                    <span class="check-icon">🍪</span>
+                    <div>
+                        <h3 class="panel-title">C. Cookie Security</h3>
+                        <p class="panel-subtitle">Secure, HttpOnly, and SameSite attributes (sensitive cookie values redacted)</p>
+                    </div>
+                </div>
+                <span class="badge badge-{{ scan.checks.cookies.status.lower() }}">{{ scan.checks.cookies.status }}</span>
+            </div>
+            <div class="panel-body">
+                <p class="check-summary-text">{{ scan.checks.cookies.message }}</p>
+                {% if scan.checks.cookies.has_cookies %}
+                    <div class="cookie-items-grid">
+                        {% for c in scan.checks.cookies.cookies %}
+                        <div class="cookie-pill-box">
+                            <span class="cookie-id font-mono">{{ c.name }}</span>
+                            <div class="flag-tags">
+                                <span class="tag-flag {{ 'flag-yes' if c.secure else 'flag-no' }}">Secure: {{ 'Yes' if c.secure else 'No' }}</span>
+                                <span class="tag-flag {{ 'flag-yes' if c.httponly else 'flag-no' }}">HttpOnly: {{ 'Yes' if c.httponly else 'No' }}</span>
+                                <span class="tag-flag {{ 'flag-yes' if c.samesite not in ['None', 'Default'] else 'flag-no' }}">SameSite: {{ c.samesite }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Card D: Server Information -->
+        <div class="content-panel mb-4">
+            <div class="panel-header flex-between">
+                <div class="check-title-group">
+                    <span class="check-icon">🖥️</span>
+                    <div>
+                        <h3 class="panel-title">D. Server Information Disclosure</h3>
+                        <p class="panel-subtitle">Inspection of Server and X-Powered-By tokens</p>
+                    </div>
+                </div>
+                <span class="badge badge-{{ scan.checks.server.status.lower() }}">{{ scan.checks.server.status }}</span>
+            </div>
+            <div class="panel-body">
+                <p class="check-summary-text">{{ scan.checks.server.message }}</p>
+                <div class="kv-grid">
+                    <div class="kv-box">
+                        <span class="kv-title">Server Header</span>
+                        <span class="kv-value font-mono">{{ scan.checks.server.server }}</span>
+                    </div>
+                    <div class="kv-box">
+                        <span class="kv-title">X-Powered-By Header</span>
+                        <span class="kv-value font-mono">{{ scan.checks.server.x_powered_by }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card E: Port Analysis -->
+        <div class="content-panel mb-4">
+            <div class="panel-header flex-between">
+                <div class="check-title-group">
+                    <span class="check-icon">🔌</span>
+                    <div>
+                        <h3 class="panel-title">E. Common Port Analysis</h3>
+                        <p class="panel-subtitle">Non-destructive socket checks: 80, 443, 22, 21, 8080</p>
+                    </div>
+                </div>
+                <a href="{{ url_for('ports', scan_id=scan.id) }}" class="btn-secondary btn-small">Detailed Analysis →</a>
+            </div>
+            <div class="panel-body">
+                <div class="ports-tiles-grid">
+                    {% for p in scan.checks.ports %}
+                    <div class="port-tile-card {{ 'port-flagged' if p.is_risk else '' }}">
+                        <span class="port-num font-mono">Port {{ p.port }}</span>
+                        <span class="port-service">{{ p.service }}</span>
+                        <div class="port-status font-mono">
+                            <span class="status-dot {{ 'dot-open' if p.status == 'Open' else 'dot-closed' }}"></span>
+                            {{ p.status }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendations Section -->
+    <div class="content-panel mb-8">
+        <div class="panel-header">
+            <h3 class="panel-title">Actionable Recommendations</h3>
+        </div>
+        <div class="panel-body">
+            <div class="recs-stack">
+                {% for rec in scan.recommendations %}
+                <div class="rec-entry">
+                    <span class="rec-badge font-mono">{{ rec.category }}</span>
+                    <h4 class="rec-headline">{{ rec.issue }}</h4>
+                    <p class="rec-detail">{{ rec.recommendation }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Actions -->
+    <div class="text-center mb-8">
+        <a href="{{ url_for('scan') }}" class="btn-secondary">Scan Another Target</a>
+        <a href="{{ url_for('download_pdf', scan_id=scan.id) }}" class="btn-primary ml-3">Download PDF Report</a>
+    </div>
+</div>
+{% endblock %}

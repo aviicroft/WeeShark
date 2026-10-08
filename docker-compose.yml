@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  webguard:
+    build: .
+    container_name: webguard
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persist the SQLite database across redeploys
+      - webguard_db:/app/webguard
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # Override if needed:
+      # - PYTHON_BIN=python3
+
+volumes:
+  webguard_db:

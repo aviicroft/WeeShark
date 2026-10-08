@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Cookie Security – {{ scan.hostname }} | WebGuard{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header flex-between">
+        <div>
+            <div class="breadcrumb-trail text-muted text-small mb-1">
+                <a href="{{ url_for('dashboard') }}">Dashboard</a> / <a href="{{ url_for('results', scan_id=scan.id) }}">{{ scan.hostname }}</a> / Cookie Security
+            </div>
+            <h1 class="page-title">Cookie Security Attributes</h1>
+            <p class="page-subtitle">Examines session flags to defend against cookie theft via XSS, network eavesdropping, and cross-site request forgery.</p>
+        </div>
+        <div class="action-buttons-group">
+            <a href="{{ url_for('results', scan_id=scan.id) }}" class="btn-secondary">← Back to Results</a>
+            <a href="{{ url_for('download_pdf', scan_id=scan.id) }}" class="btn-primary">Download PDF</a>
+        </div>
+    </div>
+
+    <!-- Meta Strip -->
+    <div class="meta-strip mb-6">
+        <span>Target: <strong class="font-mono text-white">{{ scan.target_url }}</strong></span>
+        <span>·</span>
+        <span>Status: <span class="badge badge-{{ scan.checks.cookies.status.lower() }}">{{ scan.checks.cookies.status }}</span></span>
+        <span>·</span>
+        <span>Total Cookies Discovered: <strong class="font-mono text-cyan">{{ scan.checks.cookies.count }}</strong></span>
+    </div>
+
+    <!-- Privacy Notice -->
+    <div class="content-panel mb-6">
+        <div class="panel-body flex items-center gap-3">
+            <span class="text-xl">🔒</span>
+            <div class="text-small text-slate-300">
+                <strong class="text-white block">Strict Privacy Protection:</strong>
+                WebGuard completely redacts and drops sensitive cookie payload values. Only cookie names and security flag configurations (Secure, HttpOnly, SameSite) are analyzed.
+            </div>
+        </div>
+    </div>
+
+    <!-- Cookie Attributes Table -->
+    {% if scan.checks.cookies.has_cookies %}
+    <div class="content-panel mb-6">
+        <div class="panel-header">
+            <h3 class="panel-title">Inspected Cookies & Security Flags</h3>
+        </div>
+        <div class="panel-body p-0">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Cookie Identifier</th>
+                        <th>Secure Flag</th>
+                        <th>HttpOnly Flag</th>
+                        <th>SameSite Attribute</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in scan.checks.cookies.cookies %}
+                    <tr>
+                        <td class="font-mono font-semibold text-white">{{ c.name }}</td>
+                        <td>
+                            <span class="tag-flag {{ 'flag-yes' if c.secure else 'flag-no' }}">
+                                {{ 'Yes (Encrypted Only)' if c.secure else 'Missing (Insecure)' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="tag-flag {{ 'flag-yes' if c.httponly else 'flag-no' }}">
+                                {{ 'Yes (Hidden from JS)' if c.httponly else 'Missing (XSS Risk)' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="tag-flag {{ 'flag-yes' if c.samesite not in ['None', 'Default'] else 'flag-no' }}">
+                                {{ c.samesite }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if c.secure and c.httponly %}
+                                <span class="badge badge-pass">HARDENED</span>
+                            {% else %}
+                                <span class="badge badge-warning">NEEDS ATTENTION</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="content-panel mb-6 text-center py-8">
+        <span class="text-3xl block mb-2">🍪</span>
+        <h3 class="panel-title">No Cookies Observed in Response</h3>
+        <p class="text-muted text-small max-w-md mx-auto mt-2">
+            The target server did not return any Set-Cookie headers in the initial response. Without session cookies on this endpoint, no cookie-based session hijacking risks were detected.
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Attribute Explanations -->
+    <div class="grid md:grid-cols-3 gap-4 mb-8">
+        <div class="content-panel">
+            <div class="panel-header"><h4 class="panel-title text-small">Secure Flag</h4></div>
+            <div class="panel-body text-small text-slate-300">
+                Instructs the browser that the cookie should only be transmitted over encrypted HTTPS connections, preventing interception on untrusted Wi-Fi or networks.
+            </div>
+        </div>
+        <div class="content-panel">
+            <div class="panel-header"><h4 class="panel-title text-small">HttpOnly Flag</h4></div>
+            <div class="panel-body text-small text-slate-300">
+                Blocks client-side scripts (document.cookie) from accessing the cookie, preventing session token theft in the event of a Cross-Site Scripting (XSS) vulnerability.
+            </div>
+        </div>
+        <div class="content-panel">
+            <div class="panel-header"><h4 class="panel-title text-small">SameSite Flag</h4></div>
+            <div class="panel-body text-small text-slate-300">
+                Controls whether cookies are sent with cross-site requests. Setting SameSite=Lax or Strict defends against Cross-Site Request Forgery (CSRF) attacks.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

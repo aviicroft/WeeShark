@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Reports Center | WebGuard{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header flex-between">
+        <div>
+            <h1 class="page-title">Security Reports Center</h1>
+            <p class="page-subtitle">Downloadable executive and technical PDF reports compiled dynamically from real scan records.</p>
+        </div>
+        <div class="action-buttons-group">
+            <a href="{{ url_for('scan') }}" class="btn-primary">+ New Scan</a>
+            <a href="{{ url_for('history') }}" class="btn-secondary">View Scan History</a>
+        </div>
+    </div>
+
+    <!-- Reports Table -->
+    <div class="content-panel mb-8">
+        <div class="panel-header flex-between">
+            <h3 class="panel-title">Available Security Audit Reports</h3>
+            <span class="font-mono text-muted text-small">{{ scans|length }} Document(s)</span>
+        </div>
+        <div class="panel-body p-0">
+            {% if scans %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Report Ref</th>
+                            <th>Target Website</th>
+                            <th>Assessment Date</th>
+                            <th>Security Score</th>
+                            <th>Risk Level</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in scans %}
+                        <tr>
+                            <td class="font-mono text-muted text-small">WG-REP-{{ s.id }}</td>
+                            <td class="font-mono font-semibold text-white">
+                                {{ s.target_url }}
+                            </td>
+                            <td class="text-small text-muted">{{ s.scan_date }} at {{ s.scan_time }}</td>
+                            <td class="font-mono font-bold">{{ s.score }}/100</td>
+                            <td>
+                                <span class="badge badge-{{ s.badge_color }}">{{ s.risk_level }}</span>
+                            </td>
+                            <td>
+                                <div class="table-actions">
+                                    <a href="{{ url_for('results', scan_id=s.id) }}" class="btn-secondary btn-small">View Result</a>
+                                    <a href="{{ url_for('download_pdf', scan_id=s.id) }}" class="btn-primary btn-small">Download PDF</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>No audit reports generated yet. Conduct a security scan to produce a downloadable PDF.</p>
+                <a href="{{ url_for('scan') }}" class="btn-primary mt-3">Start New Scan</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

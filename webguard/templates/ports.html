@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Port Analysis – {{ scan.hostname }} | WebGuard{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header flex-between">
+        <div>
+            <div class="breadcrumb-trail text-muted text-small mb-1">
+                <a href="{{ url_for('dashboard') }}">Dashboard</a> / <a href="{{ url_for('results', scan_id=scan.id) }}">{{ scan.hostname }}</a> / Port Analysis
+            </div>
+            <h1 class="page-title">Port Analysis & Service Exposure</h1>
+            <p class="page-subtitle">Safe, passive TCP socket connection check on common web and management ports.</p>
+        </div>
+        <div class="action-buttons-group">
+            <a href="{{ url_for('results', scan_id=scan.id) }}" class="btn-secondary">← Back to Results</a>
+            <a href="{{ url_for('download_pdf', scan_id=scan.id) }}" class="btn-primary">Download PDF</a>
+        </div>
+    </div>
+
+    <!-- Meta Strip -->
+    <div class="meta-strip mb-6">
+        <span>Target: <strong class="font-mono text-white">{{ scan.target_url }}</strong></span>
+        <span>·</span>
+        <span>Resolved IP: <strong class="font-mono text-white">{{ scan.resolved_ip }}</strong></span>
+        <span>·</span>
+        <span>Audit Mode: <strong class="font-mono text-cyan">Passive Non-Aggressive TCP Probe</strong></span>
+    </div>
+
+    <!-- Ports Overview Grid -->
+    <div class="ports-detail-grid mb-6">
+        {% for p in scan.checks.ports %}
+        <div class="content-panel port-card {% if p.is_risk %}border-danger{% endif %}">
+            <div class="panel-header flex-between">
+                <div>
+                    <span class="font-mono text-xl font-bold text-white block">Port {{ p.port }}</span>
+                    <span class="text-muted text-small">{{ p.service }}</span>
+                </div>
+                <div class="port-status font-mono">
+                    <span class="status-dot {{ 'dot-open' if p.status == 'Open' else 'dot-closed' }}"></span>
+                    <span class="{% if p.status == 'Open' %}text-white font-bold{% else %}text-muted{% endif %}">{{ p.status }}</span>
+                </div>
+            </div>
+            <div class="panel-body">
+                <p class="text-small text-slate-300 mb-3">
+                    {% if p.port == 80 %}
+                        Standard unencrypted HTTP traffic. Normal for web servers; ensure all requests automatically redirect (301) to HTTPS port 443.
+                    {% elif p.port == 443 %}
+                        Standard encrypted HTTPS web traffic. Recommended for all modern web applications.
+                    {% elif p.port == 22 %}
+                        SSH Remote Administration. Exposing port 22 directly to the public internet enables brute force and credential-stuffing attacks. Recommended to bind to VPN or firewall.
+                    {% elif p.port == 21 %}
+                        FTP (File Transfer Protocol). Insecure legacy protocol that sends credentials and data in clear text. Highly recommended to disable or migrate to SFTP.
+                    {% elif p.port == 8080 %}
+                        Alternative HTTP / Web Proxy / Developer Console. Often used for administrative panels (Tomcat, Jenkins, Node test servers). Public exposure should be restricted.
+                    {% endif %}
+                </p>
+
+                <div class="risk-indicator-box">
+                    {% if p.is_risk %}
+                        <span class="badge badge-warning">ATTENTION NEEDED</span>
+                        <span class="text-small text-muted ml-2">Potential attack surface exposure</span>
+                    {% elif p.status == 'Open' and p.port in [80, 443] %}
+                        <span class="badge badge-pass">EXPECTED SERVICE</span>
+                        <span class="text-small text-muted ml-2">Standard web endpoint</span>
+                    {% else %}
+                        <span class="badge badge-pass">SECURE</span>
+                        <span class="text-small text-muted ml-2">Port is closed / filtered</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Safety & Port Probe Methodology -->
+    <div class="content-panel mb-8">
+        <div class="panel-header">
+            <h3 class="panel-title">Non-Aggressive Port Probe Methodology</h3>
+        </div>
+        <div class="panel-body text-small text-slate-300 space-y-2">
+            <p>WebGuard adheres strictly to benign, non-destructive network assessments:</p>
+            <ul class="list-disc list-inside text-muted space-y-1">
+                <li>Probing is restricted strictly to 5 standard ports (80, 443, 22, 21, 8080).</li>
+                <li>Socket handshakes use a single lightweight SYN attempt with an automated 1.2-second timeout.</li>
+                <li>No aggressive vulnerability fuzzing, exploit payloads, or volumetric scanning is ever performed.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

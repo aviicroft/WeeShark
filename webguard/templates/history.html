@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Scan History | WebGuard{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header flex-between">
+        <div>
+            <h1 class="page-title">Scan History</h1>
+            <p class="page-subtitle">Persistent SQLite audit ledger of all live security assessments performed.</p>
+        </div>
+        <div class="action-buttons-group">
+            <a href="{{ url_for('scan') }}" class="btn-primary">+ New Scan</a>
+            <a href="{{ url_for('reports') }}" class="btn-secondary">Reports Center</a>
+        </div>
+    </div>
+
+    <!-- Scans Table -->
+    <div class="content-panel mb-8">
+        <div class="panel-header flex-between">
+            <h3 class="panel-title">Stored Scans in SQLite ({{ scans|length }})</h3>
+        </div>
+        <div class="panel-body p-0">
+            {% if scans %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Scan ID</th>
+                            <th>Target Website</th>
+                            <th>Resolved IP</th>
+                            <th>Date & Time</th>
+                            <th>Duration</th>
+                            <th>Score</th>
+                            <th>Risk Level</th>
+                            <th>Issues</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in scans %}
+                        <tr>
+                            <td class="font-mono text-muted text-small">#{{ s.id }}</td>
+                            <td class="font-mono font-semibold text-white">
+                                <a href="{{ url_for('results', scan_id=s.id) }}" class="text-cyan-hover">
+                                    {{ s.target_url }}
+                                </a>
+                            </td>
+                            <td class="font-mono text-muted text-small">{{ s.resolved_ip }}</td>
+                            <td class="text-small text-muted">{{ s.scan_date }} · {{ s.scan_time }}</td>
+                            <td class="font-mono text-small text-muted">{{ s.scan_duration }}</td>
+                            <td class="font-mono font-bold">{{ s.score }}/100</td>
+                            <td>
+                                <span class="badge badge-{{ s.badge_color }}">{{ s.risk_level }}</span>
+                            </td>
+                            <td class="font-mono text-small">{{ s.issues_count }} issues</td>
+                            <td>
+                                <div class="table-actions">
+                                    <a href="{{ url_for('results', scan_id=s.id) }}" class="action-link">Open</a>
+                                    <a href="{{ url_for('download_pdf', scan_id=s.id) }}" class="action-link text-cyan">PDF</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>No historical scans found in SQLite database.</p>
+                <a href="{{ url_for('scan') }}" class="btn-primary mt-3">Perform First Scan</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

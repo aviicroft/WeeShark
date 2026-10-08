@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | WebGuard{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <!-- Dashboard Header -->
+    <div class="page-header flex-between">
+        <div>
+            <h1 class="page-title">Security Dashboard</h1>
+            <p class="page-subtitle">Real-time web security assessment overview and vulnerability monitoring metrics.</p>
+        </div>
+        <div class="action-buttons-group">
+            <a href="{{ url_for('scan') }}" class="btn-primary">+ New Scan</a>
+            {% if stats.latest_scan %}
+                <a href="{{ url_for('results', scan_id=stats.latest_scan.id) }}" class="btn-secondary">View Results</a>
+                <a href="{{ url_for('download_pdf', scan_id=stats.latest_scan.id) }}" class="btn-secondary">Download Report</a>
+            {% endif %}
+            <a href="{{ url_for('history') }}" class="btn-secondary">Scan History</a>
+        </div>
+    </div>
+
+    <!-- Core Metrics Cards -->
+    <div class="metrics-grid">
+        <!-- 1. Total Scans -->
+        <div class="metric-card">
+            <span class="metric-label">TOTAL SCANS RECORDED</span>
+            <div class="metric-value font-mono">{{ stats.total_scans }}</div>
+            <span class="metric-desc">Executed live via SQLite ledger</span>
+        </div>
+
+        <!-- 2. Latest Security Score -->
+        <div class="metric-card">
+            <span class="metric-label">LATEST SECURITY SCORE</span>
+            <div class="metric-value font-mono">
+                {% if stats.latest_scan %}
+                    <span class="risk-text-{{ stats.latest_scan.badge_color }}">{{ stats.latest_scan.score }}</span>
+                    <span class="metric-denom">/ 100</span>
+                {% else %}
+                    <span class="text-muted">N/A</span>
+                {% endif %}
+            </div>
+            <span class="metric-desc">
+                {% if stats.latest_scan %}
+                    Rating: <strong class="risk-text-{{ stats.latest_scan.badge_color }}">{{ stats.latest_scan.risk_level }}</strong>
+                {% else %}
+                    No scans conducted yet
+                {% endif %}
+            </span>
+        </div>
+
+        <!-- 3. Latest Risk Level -->
+        <div class="metric-card">
+            <span class="metric-label">LATEST RISK LEVEL</span>
+            <div class="metric-value">
+                {% if stats.latest_scan %}
+                    <span class="risk-text-{{ stats.latest_scan.badge_color }}">{{ stats.latest_scan.risk_level }}</span>
+                {% else %}
+                    <span class="text-muted">NONE</span>
+                {% endif %}
+            </div>
+            <span class="metric-desc">Based on transport & header policies</span>
+        </div>
+
+        <!-- 4. Issues Found in Latest Scan -->
+        <div class="metric-card">
+            <span class="metric-label">ISSUES IDENTIFIED</span>
+            <div class="metric-value font-mono">
+                {% if stats.latest_scan %}
+                    {{ stats.latest_scan.issues_count }}
+                {% else %}
+                    0
+                {% endif %}
+            </div>
+            <span class="metric-desc">Warnings / missing defensive controls</span>
+        </div>
+    </div>
+
+    <!-- Latest Target Card -->
+    {% if stats.latest_scan %}
+    <div class="content-panel mb-6">
+        <div class="panel-header flex-between">
+            <h3 class="panel-title">Last Scanned Website</h3>
+            <span class="font-mono text-muted text-small">{{ stats.latest_scan.scan_date }} at {{ stats.latest_scan.scan_time }}</span>
+        </div>
+        <div class="panel-body flex-between">
+            <div>
+                <h2 class="target-url-lead font-mono">{{ stats.latest_scan.target_url }}</h2>
+                <div class="meta-tag-list">
+                    <span>IP: <strong class="font-mono text-white">{{ stats.latest_scan.resolved_ip }}</strong></span>
+                    <span>·</span>
+                    <span>Duration: <strong class="font-mono text-white">{{ stats.latest_scan.scan_duration }}</strong></span>
+                    <span>·</span>
+                    <span>Status: <strong class="font-mono text-white">{{ stats.latest_scan.http_status or '200' }}</strong></span>
+                </div>
+            </div>
+            <div class="flex-actions">
+                <a href="{{ url_for('results', scan_id=stats.latest_scan.id) }}" class="btn-primary">View Full Breakdown →</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Scans Table -->
+    <div class="content-panel">
+        <div class="panel-header flex-between">
+            <h3 class="panel-title">Recent Real-Time Scans</h3>
+            <a href="{{ url_for('history') }}" class="text-cyan text-small">View All in History →</a>
+        </div>
+        <div class="panel-body p-0">
+            {% if stats.recent_scans %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Target URL</th>
+                            <th>Resolved IP</th>
+                            <th>Scan Timestamp</th>
+                            <th>Score</th>
+                            <th>Risk Level</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in stats.recent_scans %}
+                        <tr>
+                            <td class="font-mono font-semibold text-white">{{ item.target_url }}</td>
+                            <td class="font-mono text-muted">{{ item.resolved_ip }}</td>
+                            <td class="text-muted text-small">{{ item.scan_date }} · {{ item.scan_time }}</td>
+                            <td class="font-mono font-bold">{{ item.score }}/100</td>
+                            <td>
+                                <span class="badge badge-{{ item.badge_color }}">{{ item.risk_level }}</span>
+                            </td>
+                            <td>
+                                <div class="table-actions">
+                                    <a href="{{ url_for('results', scan_id=item.id) }}" class="action-link">View</a>
+                                    <a href="{{ url_for('download_pdf', scan_id=item.id) }}" class="action-link text-cyan">PDF</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>No security assessments recorded yet.</p>
+                <a href="{{ url_for('scan') }}" class="btn-primary mt-3">Start First Real-Time Scan</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

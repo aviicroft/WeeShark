@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Server Information – {{ scan.hostname }} | WebGuard{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header flex-between">
+        <div>
+            <div class="breadcrumb-trail text-muted text-small mb-1">
+                <a href="{{ url_for('dashboard') }}">Dashboard</a> / <a href="{{ url_for('results', scan_id=scan.id) }}">{{ scan.hostname }}</a> / Server Information
+            </div>
+            <h1 class="page-title">Server Information Disclosure</h1>
+            <p class="page-subtitle">Analysis of server software banners, framework headers, and version reconnaissance risks.</p>
+        </div>
+        <div class="action-buttons-group">
+            <a href="{{ url_for('results', scan_id=scan.id) }}" class="btn-secondary">← Back to Results</a>
+            <a href="{{ url_for('download_pdf', scan_id=scan.id) }}" class="btn-primary">Download PDF</a>
+        </div>
+    </div>
+
+    <!-- Meta Strip -->
+    <div class="meta-strip mb-6">
+        <span>Target: <strong class="font-mono text-white">{{ scan.target_url }}</strong></span>
+        <span>·</span>
+        <span>Disclosure Status: <span class="badge badge-{{ scan.checks.server.status.lower() }}">{{ scan.checks.server.status }}</span></span>
+    </div>
+
+    <!-- Observed Headers Card -->
+    <div class="content-panel mb-6">
+        <div class="panel-header">
+            <h3 class="panel-title">Detected Technology Banners</h3>
+        </div>
+        <div class="panel-body">
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                <div class="kv-box p-4">
+                    <span class="kv-title">Server Response Header</span>
+                    <span class="kv-value font-mono text-base mt-1 block">{{ scan.checks.server.server }}</span>
+                </div>
+                <div class="kv-box p-4">
+                    <span class="kv-title">X-Powered-By Response Header</span>
+                    <span class="kv-value font-mono text-base mt-1 block">{{ scan.checks.server.x_powered_by }}</span>
+                </div>
+            </div>
+            <p class="text-small text-slate-300">
+                <strong>Assessment Finding:</strong> {{ scan.checks.server.message }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Why Information Disclosure is a Risk -->
+    <div class="content-panel mb-6">
+        <div class="panel-header">
+            <h3 class="panel-title">Why Unnecessary Information Disclosure Matters</h3>
+        </div>
+        <div class="panel-body text-small text-slate-300 space-y-3">
+            <p>
+                In the reconnaissance phase of an attack, adversaries scan web headers to fingerprint the exact operating system, web server daemon (e.g. <code>Apache/2.4.41</code>, <code>nginx/1.18.0</code>), and application framework (e.g. <code>Express</code>, <code>PHP/7.4.3</code>, <code>ASP.NET</code>).
+            </p>
+            <p>
+                Exposing exact software version numbers enables attackers to search the National Vulnerability Database (NVD) for unpatched Common Vulnerabilities and Exposures (CVEs) specific to that build. Hiding or generalizing these banners deprives attackers of immediate intelligence and forces them to work blind.
+            </p>
+        </div>
+    </div>
+
+    <!-- Remediation Guidance Cards -->
+    <div class="grid md:grid-cols-3 gap-4 mb-8">
+        <div class="content-panel">
+            <div class="panel-header"><h4 class="panel-title text-small font-mono">Nginx Hardening</h4></div>
+            <div class="panel-body text-small">
+                <p class="text-muted mb-2">Suppress server version tokens in <code>nginx.conf</code>:</p>
+                <pre class="code-snippet font-mono">http {
+    server_tokens off;
+}</pre>
+            </div>
+        </div>
+        <div class="content-panel">
+            <div class="panel-header"><h4 class="panel-title text-small font-mono">Apache Hardening</h4></div>
+            <div class="panel-body text-small">
+                <p class="text-muted mb-2">Suppress banners in <code>httpd.conf</code> or <code>security.conf</code>:</p>
+                <pre class="code-snippet font-mono">ServerTokens Prod
+ServerSignature Off</pre>
+            </div>
+        </div>
+        <div class="content-panel">
+            <div class="panel-header"><h4 class="panel-title text-small font-mono">Express.js Hardening</h4></div>
+            <div class="panel-body text-small">
+                <p class="text-muted mb-2">Disable <code>X-Powered-By</code> in Node.js Express:</p>
+                <pre class="code-snippet font-mono">app.disable('x-powered-by');
+// or use helmet()</pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}New Scan | WebGuard{% endblock %}
+
+{% block content %}
+<div class="page-container scanner-page-container">
+    <div class="scanner-hero-box text-center">
+        <h1 class="page-title text-large">Start Real-Time Security Scan</h1>
+        <p class="page-subtitle max-w-md mx-auto">
+            Connects live to the target website at the moment of submission to assess SSL/TLS parameters, HTTP security headers, cookie flags, and exposed ports.
+        </p>
+
+        <!-- Ethical Boundary Notice -->
+        <div class="notice-pill">
+            <span>⚠️ Notice: Use WebGuard only on websites you own or have explicit permission to test.</span>
+        </div>
+
+        <!-- Scan Form -->
+        <form id="liveScanForm" action="{{ url_for('scan') }}" method="POST" class="scan-form-box">
+            <div class="url-input-group">
+                <span class="url-protocol-prefix">https://</span>
+                <input 
+                    type="text" 
+                    name="target_url" 
+                    id="scanTargetInput" 
+                    placeholder="example.com" 
+                    required 
+                    autocomplete="off"
+                    spellcheck="false"
+                >
+            </div>
+            <button type="submit" id="submitScanBtn" class="btn-scan-submit">
+                <span>START SECURITY SCAN</span>
+            </button>
+        </form>
+
+        <!-- Quick Safe Target Buttons -->
+        <div class="quick-links-row">
+            <span class="quick-title">Quick safe test targets:</span>
+            <button type="button" class="chip-btn" onclick="fillTarget('https://example.com')">example.com</button>
+            <button type="button" class="chip-btn" onclick="fillTarget('https://cloudflare.com')">cloudflare.com</button>
+            <button type="button" class="chip-btn" onclick="fillTarget('https://github.com')">github.com</button>
+            <button type="button" class="chip-btn" onclick="fillTarget('https://wikipedia.org')">wikipedia.org</button>
+        </div>
+
+        <!-- Live Scan Progress Card (Displays on submit) -->
+        <div id="liveProgressContainer" class="progress-display-card hidden">
+            <div class="progress-spinner"></div>
+            <h3 class="progress-stage-title" id="stageStatusText">Scanning target...</h3>
+            
+            <div class="progress-track">
+                <div id="progressBarFill" class="progress-fill"></div>
+            </div>
+
+            <div class="stages-checklist">
+                <div class="stage-row" id="p_step1">✓ Validating URL & SSRF boundaries</div>
+                <div class="stage-row" id="p_step2">⏳ Connecting & checking HTTPS...</div>
+                <div class="stage-row" id="p_step3">⏳ Analyzing security headers...</div>
+                <div class="stage-row" id="p_step4">⏳ Checking cookies...</div>
+                <div class="stage-row" id="p_step5">⏳ Checking server information...</div>
+                <div class="stage-row" id="p_step6">⏳ Checking allowed common ports...</div>
+                <div class="stage-row" id="p_step7">⏳ Calculating security score...</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function fillTarget(url) {
+    const input = document.getElementById('scanTargetInput');
+    input.value = url;
+    input.focus();
+}
+
+const form = document.getElementById('liveScanForm');
+const progressCard = document.getElementById('liveProgressContainer');
+const stageTitle = document.getElementById('stageStatusText');
+const barFill = document.getElementById('progressBarFill');
+const submitBtn = document.getElementById('submitScanBtn');
+
+const stages = [
+    { label: "Scanning target...", pct: "15%", id: "p_step1" },
+    { label: "Checking HTTPS...", pct: "30%", id: "p_step2" },
+    { label: "Analyzing security headers...", pct: "50%", id: "p_step3" },
+    { label: "Checking cookies...", pct: "65%", id: "p_step4" },
+    { label: "Checking server information...", pct: "80%", id: "p_step5" },
+    { label: "Checking allowed common ports...", pct: "92%", id: "p_step6" },
+    { label: "Calculating security score...", pct: "98%", id: "p_step7" }
+];
+
+form.addEventListener('submit', function() {
+    progressCard.classList.remove('hidden');
+    submitBtn.disabled = true;
+    submitBtn.classList.add('disabled');
+
+    let current = 0;
+    const interval = setInterval(() => {
+        if (current < stages.length) {
+            const st = stages[current];
+            stageTitle.textContent = st.label;
+            barFill.style.width = st.pct;
+
+            const row = document.getElementById(st.id);
+            if (row) {
+                row.textContent = "✓ " + row.textContent.replace("⏳ ", "");
+                row.classList.add("completed");
+            }
+            current++;
+        } else {
+            clearInterval(interval);
+        }
+    }, 380);
+});
+</script>
+{% endblock %}
