@@ -1,4 +1,4 @@
-# 🛡️ WebGuard – Real-Time Web Security Assessment & Vulnerability Scanner
+# 🛡️ WeeShark – Real-Time Web Security Assessment & Vulnerability Scanner
 
 [![Python Tests](https://img.shields.io/badge/Python%20Tests-42%20Passed-emerald.svg)](tests/)
 [![Node Tests](https://img.shields.io/badge/Node%20API%20Tests-8%20Passed-emerald.svg)](tests/)
@@ -6,9 +6,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 [![Security: SSRF Protected](https://img.shields.io/badge/Security-SSRF%20Protected-cyan.svg)](#ssrf-protection-architecture)
 
-**WebGuard** is a defensive, real-time web security assessment engine and basic vulnerability scanner. It performs passive, non-destructive audits of websites to evaluate SSL/TLS transport security, HTTP defense headers, cookie privacy flags, technology disclosure, and common open network ports.
+**WeeShark** is a defensive, real-time web security assessment engine and basic vulnerability scanner. It performs passive, non-destructive audits of websites to evaluate SSL/TLS transport security, HTTP defense headers, cookie privacy flags, technology disclosure, and common open network ports.
 
-WebGuard ships with a **dual-architecture implementation**:
+WeeShark ships with a **dual-architecture implementation**:
 1. **Modern Single-Page Application (SPA)**: Powered by React 19, TypeScript, TailwindCSS v4, Vite, and an Express API server with client-side PDF export (`jsPDF`).
 2. **Multi-Page Web Application**: Powered by Python 3, Flask, Jinja2 templates, and server-side PDF generation (`ReportLab`).
 3. **Shared Python Core**: Both interfaces utilize the same high-performance Python security engine (`scanner.py`) and SQLite audit ledger (`database.py`).
@@ -70,7 +70,7 @@ WebGuard ships with a **dual-architecture implementation**:
                      └──────────────────────────┬──────────────────────────┘
                                                 ▼
                                ┌─────────────────────────────────┐
-                               │     WebGuard Engine Core        │
+                               │     WeeShark Engine Core        │
                                │  - scanner.py (SSRF + Checks)   │
                                │  - database.py (SQLite Ledger)  │
                                │  - report.py (ReportLab PDF)    │
@@ -92,7 +92,7 @@ For comprehensive details on internal component interactions, refer to [ARCHITEC
 
 ## 🔍 Security Checks & Methodology
 
-WebGuard evaluates 5 distinct vectors on each target website:
+WeeShark evaluates 5 distinct vectors on each target website:
 
 ### 1. Transport Encryption & TLS Verification
 - Verifies that target enforces HTTPS over port 443.
@@ -129,7 +129,7 @@ WebGuard evaluates 5 distinct vectors on each target website:
 
 ## 📈 Dynamic Scoring Algorithm
 
-WebGuard calculates a deterministic score from **0 to 100 points** based on the following weighted model:
+WeeShark calculates a deterministic score from **0 to 100 points** based on the following weighted model:
 
 | Category | Maximum Points | Criteria |
 | :--- | :---: | :--- |
@@ -150,7 +150,7 @@ WebGuard calculates a deterministic score from **0 to 100 points** based on the 
 
 ## 🛡️ SSRF Defense-in-Depth
 
-Server-Side Request Forgery (SSRF) is a primary concern for web auditing tools. WebGuard implements multi-tier defense:
+Server-Side Request Forgery (SSRF) is a primary concern for web auditing tools. WeeShark implements multi-tier defense:
 
 1. **Protocol Restriction**: Only `http://` and `https://` schemes are accepted. Protocols such as `file://`, `ftp://`, `gopher://`, or `data://` are immediately rejected.
 2. **Hostname Blacklist**: Hostnames matching `localhost`, loopback IPs, `.local`, `.internal`, or cloud metadata endpoints (`metadata.google.internal`) are blocked.
@@ -176,8 +176,8 @@ Server-Side Request Forgery (SSRF) is a primary concern for web auditing tools. 
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/sivaharish-R/WebGuard-Real-Time-Web-Security-Assessment-Basic-Vulnerability-Scanner.git
-   cd WebGuard-Real-Time-Web-Security-Assessment-Basic-Vulnerability-Scanner
+   git clone https://github.com/aviicroft/WeeShark.git
+   cd WeeShark
    ```
 
 2. **Install Node dependencies:**
@@ -194,7 +194,7 @@ Server-Side Request Forgery (SSRF) is a primary concern for web auditing tools. 
    ```bash
    npm run dev
    ```
-   Open your browser at **http://localhost:3000** to access the WebGuard SPA.
+   Open your browser at **http://localhost:3000** to access the WeeShark SPA.
 
 5. **Build for production:**
    ```bash
@@ -221,7 +221,7 @@ If you prefer to run the lightweight Python multi-page Flask interface:
 
 ## 🧪 Running Automated Tests
 
-WebGuard includes comprehensive test suites covering unit logic, SSRF defenses, database operations, and API endpoints.
+WeeShark includes comprehensive test suites covering unit logic, SSRF defenses, database operations, and API endpoints.
 
 ### Run Python Test Suite (pytest)
 ```bash
@@ -274,7 +274,7 @@ For detailed endpoint schemas, request/response payloads, and curl snippets, vie
 
 ## 📑 PDF Security Reports
 
-WebGuard allows downloading executive and technical audit reports in PDF format:
+WeeShark allows downloading executive and technical audit reports in PDF format:
 
 - **From React SPA**: Click **Download PDF Report** on any scan result card or reports table to generate a vector-drawn PDF directly in the browser via `jsPDF`.
 - **From Flask App**: Click **Download PDF** on any result to invoke `/download-pdf/<id>`, generating a formatted PDF via `ReportLab` with a plain-text fallback option.
@@ -284,7 +284,7 @@ WebGuard allows downloading executive and technical audit reports in PDF format:
 ## 📁 Project Structure
 
 ```
-WebGuard/
+WeeShark/
 ├── docs/
 │   ├── ARCHITECTURE.md          # Architectural specification and data flows
 │   └── API.md                   # REST API documentation and examples
@@ -318,5 +318,5 @@ WebGuard/
 ## ⚖️ Responsible Use & Disclaimer
 
 > [!CAUTION]
-> **Authorized Defensive Audit Only**: WebGuard is built for system administrators, security engineers, and developers to assess and harden websites they own or have explicit authorization to test. Conducting unauthorized network scans or port probes against third-party systems without prior written consent may violate applicable cybersecurity laws and regulations.
+> **Authorized Defensive Audit Only**: WeeShark is built for system administrators, security engineers, and developers to assess and harden websites they own or have explicit authorization to test. Conducting unauthorized network scans or port probes against third-party systems without prior written consent may violate applicable cybersecurity laws and regulations.
 

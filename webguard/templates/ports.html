@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Port Analysis – {{ scan.hostname }} | WebGuard{% endblock %}
+{% block title %}Port Analysis – {{ scan.hostname }} | WeeShark{% endblock %}
 
 {% block content %}
 <div class="page-container">
@@ -79,7 +79,7 @@
             <h3 class="panel-title">Non-Aggressive Port Probe Methodology</h3>
         </div>
         <div class="panel-body text-small text-slate-300 space-y-2">
-            <p>WebGuard adheres strictly to benign, non-destructive network assessments:</p>
+            <p>WeeShark adheres strictly to benign, non-destructive network assessments:</p>
             <ul class="list-disc list-inside text-muted space-y-1">
                 <li>Probing is restricted strictly to 5 standard ports (80, 443, 22, 21, 8080).</li>
                 <li>Socket handshakes use a single lightweight SYN attempt with an automated 1.2-second timeout.</li>

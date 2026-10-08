@@ -1,5 +1,5 @@
 """
-WebGuard - SQLite Database Layer (database.py)
+WeeShark - SQLite Database Layer (database.py)
 Stores real-time scan results, metadata, security checks, and recommendations.
 """
 

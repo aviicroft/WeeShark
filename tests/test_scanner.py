@@ -1,5 +1,5 @@
 """
-Unit and Integration Tests for WebGuard Scanner Engine (scanner.py)
+Unit and Integration Tests for WeeShark Scanner Engine (scanner.py)
 """
 
 import pytest

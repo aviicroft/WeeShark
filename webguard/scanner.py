@@ -1,5 +1,5 @@
 """
-WebGuard - Real-Time Web Security Assessment & Basic Vulnerability Scanner
+WeeShark - Real-Time Web Security Assessment & Basic Vulnerability Scanner
 Scanner Engine (scanner.py)
 
 Performs live security checks:
@@ -114,7 +114,7 @@ def get_ip_geolocation(ip_str):
         try:
             req = urllib.request.Request(
                 f"https://ipinfo.io/{ip_str}/json?token={geoip_api_key}",
-                headers={"User-Agent": "WebGuard-Security-Scanner/2.0"}
+                headers={"User-Agent": "WeeShark-Security-Scanner/2.0"}
             )
             with urllib.request.urlopen(req, timeout=3.5) as resp:
                 data = json.loads(resp.read().decode("utf-8", errors="ignore"))
@@ -148,7 +148,7 @@ def get_ip_geolocation(ip_str):
     try:
         req = urllib.request.Request(
             f"https://ipwho.is/{ip_str}",
-            headers={"User-Agent": "WebGuard-Security-Scanner/2.0"}
+            headers={"User-Agent": "WeeShark-Security-Scanner/2.0"}
         )
         with urllib.request.urlopen(req, timeout=3.5) as resp:
             data = json.loads(resp.read().decode("utf-8", errors="ignore"))
@@ -179,7 +179,7 @@ def get_ip_geolocation(ip_str):
     try:
         req = urllib.request.Request(
             f"https://freeipapi.com/api/json/{ip_str}",
-            headers={"User-Agent": "WebGuard-Security-Scanner/2.0"}
+            headers={"User-Agent": "WeeShark-Security-Scanner/2.0"}
         )
         with urllib.request.urlopen(req, timeout=3.5) as resp:
             data = json.loads(resp.read().decode("utf-8", errors="ignore"))
@@ -755,7 +755,7 @@ def scan_target(target_url_input):
     http_status_code = None
 
     request_headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 WebGuard/1.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 WeeShark/1.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
     }
 

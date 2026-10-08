@@ -1,5 +1,5 @@
 """
-Unit Tests for WebGuard PDF and Text Report Generation (report.py)
+Unit Tests for WeeShark PDF and Text Report Generation (report.py)
 """
 
 import pytest
@@ -65,7 +65,7 @@ def mock_scan():
 
 def test_generate_pdf_report_structure(mock_scan):
     buffer, filename, mimetype = generate_pdf_report(mock_scan)
-    assert filename.startswith("WebGuard-Report-secure-target.org")
+    assert filename.startswith("WeeShark-Report-secure-target.org")
     assert filename.endswith(".pdf")
     assert mimetype == "application/pdf"
 
@@ -92,7 +92,7 @@ def test_generate_pdf_fallback_text(monkeypatch, mock_scan):
     assert mimetype == "text/plain"
 
     content = buffer.getvalue().decode("utf-8")
-    assert "WEBGUARD" in content
+    assert "WEESHARK" in content
     assert "secure-target.org" in content
     assert "92 / 100" in content
 

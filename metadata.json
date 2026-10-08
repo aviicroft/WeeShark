@@ -1,5 +1,5 @@
 {
-  "name": "WebGuard – Real-Time Web Security Assessment",
+  "name": "WeeShark – Real-Time Web Security Assessment",
   "description": "Real-time web security assessment and basic vulnerability scanner with dynamic scoring, live header and port checks, and PDF reporting.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

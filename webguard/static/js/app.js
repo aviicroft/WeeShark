@@ -1,5 +1,5 @@
 /**
- * WebGuard - Client-Side App Logic (app.js)
+ * WeeShark - Client-Side App Logic (app.js)
  */
 
 document.addEventListener('DOMContentLoaded', () => {

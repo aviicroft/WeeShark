@@ -1,15 +1,15 @@
 version: "3.9"
 
 services:
-  webguard:
+  weeshark:
     build: .
-    container_name: webguard
+    container_name: weeshark
     restart: unless-stopped
     ports:
       - "3000:3000"
     volumes:
       # Persist the SQLite database across redeploys
-      - webguard_db:/app/webguard
+      - weeshark_db:/app/webguard
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -17,4 +17,4 @@ services:
       # - PYTHON_BIN=python3
 
 volumes:
-  webguard_db:
+  weeshark_db:

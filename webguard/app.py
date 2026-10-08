@@ -1,5 +1,5 @@
 """
-WebGuard - Multi-Page Flask Application (app.py)
+WeeShark - Multi-Page Flask Application (app.py)
 
 Routes:
 1.  GET /                      -> Dashboard (Overview metrics, recent scans, quick links)
@@ -27,7 +27,7 @@ from database import get_scan_by_id, get_latest_scan, get_all_scans, get_dashboa
 from report import generate_pdf_report
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "webguard-multipage-key-2026")
+app.secret_key = os.environ.get("SECRET_KEY", "weeshark-multipage-key-2026")
 
 
 @app.context_processor
@@ -37,7 +37,7 @@ def inject_global_data():
     return {
         "latest_scan_id": latest["id"] if latest else 1,
         "has_scans": latest is not None,
-        "mapbox_token": os.environ.get("VITE_MAPBOX_TOKEN") or os.environ.get("MAPBOX_TOKEN", "")
+        "mapbox_token": os.environ.get("VITE_MAPBOX_TOKEN") or os.environ.get("MAPBOX_TOKEN") or "pk.eyJ1IjoiYXZpaWNyb2Z0IiwiYSI6ImNtdXp1MmRkMzA3ZzkyeXF5cHp6Y2ptdXMifQ.tubj9TNKBuFUzvuj7Mdx-Q"
     }
 
 
@@ -184,5 +184,5 @@ def api_dashboard():
 
 
 if __name__ == "__main__":
-    print("WebGuard Multi-Page Dashboard running on http://127.0.0.1:5000")
+    print("WeeShark Multi-Page Dashboard running on http://127.0.0.1:5000")
     app.run(host="0.0.0.0", port=5000, debug=True)

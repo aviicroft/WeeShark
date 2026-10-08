@@ -304,7 +304,7 @@ async function startServer() {
 
   if (process.env.NODE_ENV !== 'test') {
     app.listen(Number(PORT), '0.0.0.0', () => {
-      console.log(`WebGuard server is running at http://0.0.0.0:${PORT}`);
+      console.log(`WeeShark server is running at http://0.0.0.0:${PORT}`);
     });
   }
 }

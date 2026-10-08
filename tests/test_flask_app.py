@@ -1,5 +1,5 @@
 """
-Integration Tests for WebGuard Multi-Page Flask Application (app.py)
+Integration Tests for WeeShark Multi-Page Flask Application (app.py)
 """
 
 import pytest
@@ -51,7 +51,7 @@ def client(monkeypatch, tmp_path):
 def test_dashboard_route(client):
     res = client.get("/")
     assert res.status_code == 200
-    assert b"WEBGUARD" in res.data
+    assert b"WEESHARK" in res.data
     assert b"Security Dashboard" in res.data
 
 

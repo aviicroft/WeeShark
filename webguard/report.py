@@ -1,5 +1,5 @@
 """
-WebGuard - PDF Report Generator (report.py)
+WeeShark - PDF Report Generator (report.py)
 Creates real PDF documents dynamically from SQLite scan records.
 """
 
@@ -12,7 +12,7 @@ def generate_pdf_report(scan_data):
     Generates a professional multi-section PDF security assessment report.
     Returns: BytesIO buffer containing the PDF bytes, and a filename.
     """
-    filename = f"WebGuard-Report-{scan_data.get('hostname', 'scan')}-{scan_data.get('id', 'latest')}.pdf"
+    filename = f"WeeShark-Report-{scan_data.get('hostname', 'scan')}-{scan_data.get('id', 'latest')}.pdf"
 
     try:
         from reportlab.lib.pagesizes import letter
@@ -29,7 +29,7 @@ def generate_pdf_report(scan_data):
 
         c.setFillColor(colors.HexColor("#06B6D4"))
         c.setFont("Helvetica-Bold", 22)
-        c.drawString(40, height - 45, "WEBGUARD")
+        c.drawString(40, height - 45, "WEESHARK")
 
         c.setFillColor(colors.white)
         c.setFont("Helvetica", 11)
@@ -190,8 +190,8 @@ def generate_pdf_report(scan_data):
         c.line(40, 40, width - 40, 40)
         c.setFont("Helvetica", 7)
         c.setFillColor(colors.HexColor("#94A3B8"))
-        c.drawString(40, 28, "Authorized Use Notice: WebGuard is a passive security auditing tool. Conduct scans only on authorized assets.")
-        c.drawRightString(width - 40, 28, "WebGuard Security Engine · 2026")
+        c.drawString(40, 28, "Authorized Use Notice: WeeShark is a passive security auditing tool. Conduct scans only on authorized assets.")
+        c.drawRightString(width - 40, 28, "WeeShark Security Engine · 2026")
 
         c.showPage()
         c.save()
@@ -202,7 +202,7 @@ def generate_pdf_report(scan_data):
         # Fallback to cleanly formatted text report if reportlab is not yet installed
         buffer = io.BytesIO()
         text_content = f"""===============================================================
-WEBGUARD - WEB SECURITY ASSESSMENT & VULNERABILITY AUDIT REPORT
+WEESHARK - WEB SECURITY ASSESSMENT & VULNERABILITY AUDIT REPORT
 ===============================================================
 Scan ID        : #{scan_data.get('id', 'N/A')}
 Target URL     : {scan_data.get('target_url')}
@@ -241,8 +241,8 @@ Observed: {scan_data.get('checks', {}).get('server', {}).get('exposed_details')}
         for rec in scan_data.get('recommendations', []):
             text_content += f"- [{rec['category']}] {rec['issue']}\n  Action: {rec['recommendation']}\n"
 
-        text_content += "\nAuthorized Use Notice: Use WebGuard only on systems you own or have explicit permission to audit.\n"
+        text_content += "\nAuthorized Use Notice: Use WeeShark only on systems you own or have explicit permission to audit.\n"
 
         buffer.write(text_content.encode("utf-8"))
         buffer.seek(0)
-        return buffer, f"WebGuard-Report-{scan_data.get('hostname')}.txt", "text/plain"
+        return buffer, f"WeeShark-Report-{scan_data.get('hostname')}.txt", "text/plain"

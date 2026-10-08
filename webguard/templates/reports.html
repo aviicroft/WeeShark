@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Reports Center | WebGuard{% endblock %}
+{% block title %}Reports Center | WeeShark{% endblock %}
 
 {% block content %}
 <div class="page-container">
@@ -38,7 +38,7 @@
                     <tbody>
                         {% for s in scans %}
                         <tr>
-                            <td class="font-mono text-muted text-small">WG-REP-{{ s.id }}</td>
+                            <td class="font-mono text-muted text-small">WS-REP-{{ s.id }}</td>
                             <td class="font-mono font-semibold text-white">
                                 {{ s.target_url }}
                             </td>

@@ -137,48 +137,32 @@ export const ServerGeoMap: React.FC<ServerGeoMapProps> = ({
         scrollWheelZoom: true,
       });
 
-      // Check for Mapbox token in Vite environment
-      const mapboxToken = (import.meta as any).env?.VITE_MAPBOX_TOKEN?.trim();
-      let tileLayer: L.TileLayer;
-      let attributionLabel = '<span class="text-[9px] text-slate-500">© OpenStreetMap · CARTO</span>';
+      // Always use Mapbox dark-v11 tiles with official Mapbox · OpenStreetMap attribution
+      const DEFAULT_MAPBOX_TOKEN =
+        'pk.eyJ1IjoiYXZpaWNyb2Z0IiwiYSI6ImNtdXp1MmRkMzA3ZzkyeXF5cHp6Y2ptdXMifQ.tubj9TNKBuFUzvuj7Mdx-Q';
+      const mapboxToken =
+        (import.meta as any).env?.VITE_MAPBOX_TOKEN?.trim() ||
+        (import.meta as any).env?.MAPBOX_TOKEN?.trim() ||
+        DEFAULT_MAPBOX_TOKEN;
 
-      if (mapboxToken) {
-        tileLayer = L.tileLayer(
-          `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`,
-          {
-            tileSize: 512,
-            zoomOffset: -1,
-            maxZoom: 19,
-            attribution: '© Mapbox © OpenStreetMap',
-          }
-        );
-        attributionLabel = '<span class="text-[9px] text-slate-500">© Mapbox · OpenStreetMap</span>';
-
-        // Graceful fallback to CartoDB if Mapbox fails or token is rejected
-        tileLayer.on('tileerror', () => {
-          L.tileLayer(
-            'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-            { subdomains: 'abcd', maxZoom: 19 }
-          ).addTo(map);
-        });
-      } else {
-        tileLayer = L.tileLayer(
-          'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-          {
-            subdomains: 'abcd',
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap &copy; CARTO',
-          }
-        );
-      }
+      const tileLayer = L.tileLayer(
+        `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`,
+        {
+          tileSize: 512,
+          zoomOffset: -1,
+          maxZoom: 19,
+          attribution: '© Mapbox © OpenStreetMap',
+        }
+      );
 
       tileLayer.addTo(map);
 
-      // Add custom attribution bottom-right
+      // Attribution control: displays "Mapbox · OpenStreetMap | © Mapbox © OpenStreetMap"
       L.control
         .attribution({
           position: 'bottomright',
-          prefix: attributionLabel,
+          prefix:
+            '<a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer">Mapbox</a> · <a href="https://www.openstreetmap.org/about/" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>',
         })
         .addTo(map);
 
@@ -315,6 +299,24 @@ export const ServerGeoMap: React.FC<ServerGeoMapProps> = ({
         }
         .leaflet-container {
           background: #0b0f19 !important;
+        }
+        .leaflet-control-attribution {
+          background: rgba(11, 15, 25, 0.85) !important;
+          backdrop-filter: blur(4px) !important;
+          border: 1px solid rgba(51, 65, 85, 0.5) !important;
+          border-radius: 4px !important;
+          color: #94a3b8 !important;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+          font-size: 9.5px !important;
+          padding: 2px 6px !important;
+          margin: 0 4px 4px 0 !important;
+        }
+        .leaflet-control-attribution a {
+          color: #38bdf8 !important;
+          text-decoration: none !important;
+        }
+        .leaflet-control-attribution a:hover {
+          text-decoration: underline !important;
         }
       `}</style>
 

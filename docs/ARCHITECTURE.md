@@ -1,12 +1,12 @@
-# 🏗️ WebGuard – Technical Architecture & System Design
+# 🏗️ WeeShark – Technical Architecture & System Design
 
-This document details the architectural design, security boundaries, data workflows, database schemas, and scoring models powering WebGuard.
+This document details the architectural design, security boundaries, data workflows, database schemas, and scoring models powering WeeShark.
 
 ---
 
 ## 1. Dual-Stack Architectural Overview
 
-WebGuard adopts a dual-stack layout designed to balance rapid client-side responsiveness with cross-platform backend simplicity:
+WeeShark adopts a dual-stack layout designed to balance rapid client-side responsiveness with cross-platform backend simplicity:
 
 ```
 +-----------------------------------------------------------------------------------+
@@ -93,7 +93,7 @@ When a user initiates a scan (via the React SPA or Flask UI), the execution step
 
 ## 3. SSRF Defense-in-Depth Specification
 
-WebGuard implements a **zero-trust boundary** for all network destinations:
+WeeShark implements a **zero-trust boundary** for all network destinations:
 
 | Layer | Protection Mechanism | Blocked Targets |
 | :--- | :--- | :--- |

@@ -1,5 +1,5 @@
 """
-Unit Tests for WebGuard Database Layer (database.py)
+Unit Tests for WeeShark Database Layer (database.py)
 """
 
 import pytest

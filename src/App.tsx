@@ -276,7 +276,7 @@ export default function App() {
     doc.setTextColor(6, 182, 212);
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('WEBGUARD', 15, 18);
+    doc.text('WEESHARK', 15, 18);
 
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(11);
@@ -286,7 +286,7 @@ export default function App() {
     doc.setFontSize(8.5);
     doc.setFont('helvetica', 'normal');
     doc.text(
-      `Report Reference: WG-REP-${scan.id || 1} · Generated: ${scan.scan_date} at ${scan.scan_time}`,
+      `Report Reference: WS-REP-${scan.id || 1} · Generated: ${scan.scan_date} at ${scan.scan_time}`,
       15,
       36
     );
@@ -431,12 +431,12 @@ export default function App() {
     doc.setFontSize(7.5);
     doc.setTextColor(148, 163, 184);
     doc.text(
-      'WebGuard Automated Security Assessment Engine · For Authorized Defensive Audit Only',
+      'WeeShark Automated Security Assessment Engine · For Authorized Defensive Audit Only',
       15,
       y
     );
 
-    doc.save(`WebGuard-Report-${scan.hostname || 'target'}.pdf`);
+    doc.save(`WeeShark-Report-${scan.hostname || 'target'}.pdf`);
   };
 
   // Filtered scans for History & Reports pages
@@ -460,7 +460,7 @@ export default function App() {
               <Shield className="w-4 h-4" />
             </div>
             <span className="text-lg font-extrabold tracking-tight text-white font-sans">
-              WEBGUARD
+              WEESHARK
             </span>
           </button>
 
@@ -876,7 +876,7 @@ export default function App() {
 
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs mb-6 text-left">
               <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
-              <span>Use WebGuard only on websites you own or have explicit permission to test.</span>
+              <span>Use WeeShark only on websites you own or have explicit permission to test.</span>
             </div>
 
             {/* Scan Form */}
@@ -1618,7 +1618,7 @@ export default function App() {
               <Lock className="w-5 h-5 text-cyan-400 shrink-0" />
               <div className="text-slate-300">
                 <strong className="text-white block">Zero Sensitive Data Retention:</strong>
-                WebGuard completely drops session values. Only cookie names and attribute flags (Secure,
+                WeeShark completely drops session values. Only cookie names and attribute flags (Secure,
                 HttpOnly, SameSite) are analyzed.
               </div>
             </div>
@@ -2122,7 +2122,7 @@ ServerSignature Off</pre>
                   <tbody className="divide-y divide-slate-800/60">
                     {history.map((s, idx) => (
                       <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
-                        <td className="p-3 font-mono text-slate-500">WG-REP-{s.id || idx + 1}</td>
+                        <td className="p-3 font-mono text-slate-500">WS-REP-{s.id || idx + 1}</td>
                         <td className="p-3">
                           <div className="font-mono font-semibold text-white">{s.target_url}</div>
                           <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1.5 mt-0.5">
@@ -2188,7 +2188,7 @@ ServerSignature Off</pre>
       {/* Footer */}
       <footer className="border-t border-slate-800/80 py-5 text-center text-xs text-slate-500 bg-[#0f172a]">
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>WebGuard · Multi-Page Real-Time Web Security Assessment</span>
+          <span>WeeShark · Multi-Page Real-Time Web Security Assessment</span>
           <span className="font-mono text-slate-600 text-[11px]">
             Passive audits only · SQLite Ledger · SSRF Protected
           </span>

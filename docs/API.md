@@ -1,6 +1,6 @@
-# 📡 WebGuard REST API Specification
+# 📡 WeeShark REST API Specification
 
-WebGuard provides RESTful JSON endpoints hosted by the Express gateway (port 3000) and the Flask application (port 5000).
+WeeShark provides RESTful JSON endpoints hosted by the Express gateway (port 3000) and the Flask application (port 5000).
 
 ---
 

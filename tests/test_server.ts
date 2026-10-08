@@ -1,5 +1,5 @@
 /**
- * Automated Test Suite for WebGuard Express API Server (server.ts)
+ * Automated Test Suite for WeeShark Express API Server (server.ts)
  */
 
 process.env.NODE_ENV = 'test';
@@ -40,7 +40,7 @@ async function runTests() {
     }
   }
 
-  console.log('\nRunning WebGuard Express API Tests:');
+  console.log('\nRunning WeeShark Express API Tests:');
 
   await test('GET /api/dashboard returns metrics JSON', async () => {
     const res = await fetch(`${baseUrl}/api/dashboard`);
