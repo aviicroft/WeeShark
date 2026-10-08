@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0B1120; color: #F8FAFC; font-family: 'Inter', sans-serif; }
+    .slide-container { 
+      width: 1280px; 
+      min-height: 720px; 
+      background: #0B1120; 
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .motif { position: absolute; top: 30px; left: 60px; font-size: 14px; color: #94A3B8; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.1em; }
+    .slide-number { position: absolute; top: 30px; right: 60px; font-size: 14px; color: #94A3B8; font-family: 'Space Grotesk', sans-serif; }
+    
+    .slide-header { margin-bottom: 60px; }
+    .slide-title { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; color: #06B6D4; margin-bottom: 10px; }
+
+    .problem-statement {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 44px;
+      line-height: 1.2;
+      color: #F8FAFC;
+      border-left: 6px solid #F59E0B;
+      padding-left: 40px;
+      margin-bottom: 60px;
+      max-width: 1000px;
+    }
+
+    .objectives-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 40px;
+      flex: 1;
+    }
+
+    .objective-item {
+      border-top: 1px solid #334155;
+      padding-top: 20px;
+    }
+    .obj-title { font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: #06B6D4; margin-bottom: 12px; }
+    .obj-text { font-size: 18px; color: #94A3B8; line-height: 1.5; }
+
+    .footer-cite { position: absolute; bottom: 30px; left: 60px; font-size: 14px; color: #94A3B8; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="motif">[ W-SHARK // PROBLEM ]</div>
+    <div class="slide-number">04 / 10</div>
+    
+    <div class="slide-header">
+      <h2 class="slide-title">Problem Statement | Baseline Without Overreach</h2>
+    </div>
+
+    <div class="problem-statement">
+      Organizations lack an automated, low-friction mechanism to verify the <strong>defensive posture</strong> of their web assets against well-established standards without triggering aggressive security alerts or impacting availability.
+    </div>
+
+    <div class="objectives-grid">
+      <div class="objective-item">
+        <h3 class="obj-title">Core Research Question</h3>
+        <p class="obj-text">Can a passive audit engine effectively quantify web security posture using only non-destructive, externally visible signals while maintaining strict SSRF safety?</p>
+      </div>
+      
+      <div class="objective-item">
+        <h3 class="obj-title">Assessment Scope</h3>
+        <p class="obj-text">Evaluating encryption validity, header compliance, and service exposure. Excludes credential testing, application logic flaws, or invasive payloads.</p>
+      </div>
+
+      <div class="objective-item">
+        <h3 class="obj-title">Primary Objective</h3>
+        <p class="obj-text">Standardize a weighted 0-100 scoring model grounded in NIST and OWASP guidance to prioritize remediation efforts across large asset pools.</p>
+      </div>
+
+      <div class="objective-item">
+        <h3 class="obj-title">Safety Constraint</h3>
+        <p class="obj-text">Implement a multi-tier defense-in-depth boundary to ensure the assessment engine cannot be leveraged for Server-Side Request Forgery (SSRF).</p>
+      </div>
+    </div>
+
+    <div class="footer-cite">Project Goal: Continuous Posture Awareness</div>
+  </div>
+</body>
+</html>

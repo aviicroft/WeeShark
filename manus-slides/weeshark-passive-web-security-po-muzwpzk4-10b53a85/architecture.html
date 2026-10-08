@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0B1120; color: #F8FAFC; font-family: 'Inter', sans-serif; }
+    .slide-container { 
+      width: 1280px; 
+      min-height: 720px; 
+      background: #0B1120; 
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .motif { position: absolute; top: 30px; left: 60px; font-size: 14px; color: #94A3B8; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.1em; }
+    .slide-number { position: absolute; top: 30px; right: 60px; font-size: 14px; color: #94A3B8; font-family: 'Space Grotesk', sans-serif; }
+    
+    .slide-header { margin-bottom: 40px; }
+    .slide-title { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; color: #06B6D4; margin-bottom: 10px; }
+    .slide-subtitle { color: #94A3B8; font-size: 18px; }
+
+    .arch-diagram {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin-top: 20px;
+    }
+
+    .layer {
+      width: 900px;
+      border: 1px solid #334155;
+      background: #151E32;
+      padding: 20px;
+      margin: 15px 0;
+      position: relative;
+      text-align: center;
+    }
+    .layer-label { font-family: 'Space Grotesk', sans-serif; font-size: 12px; color: #06B6D4; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 15px; text-align: left; }
+    .layer-blocks { display: flex; justify-content: space-evenly; gap: 20px; }
+    .block { flex: 1; border: 1px solid #334155; padding: 15px; font-size: 16px; color: #F8FAFC; }
+    .block strong { color: #06B6D4; display: block; margin-bottom: 5px; font-family: 'Space Grotesk', sans-serif; }
+
+    .arrow { height: 30px; width: 2px; background: #334155; position: relative; }
+    .arrow::after { content: ''; position: absolute; bottom: -5px; left: -4px; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 8px solid #334155; }
+
+    .ssrf-gate {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 120px;
+      height: 120px;
+      border: 1px solid #F59E0B;
+      color: #F59E0B;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 700;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .footer-cite { position: absolute; bottom: 30px; left: 60px; font-size: 14px; color: #94A3B8; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="motif">[ W-SHARK // ARCH ]</div>
+    <div class="slide-number">06 / 10</div>
+    
+    <div class="slide-header">
+      <h2 class="slide-title">System Architecture | Dual-Stack Design</h2>
+      <p class="slide-subtitle">Separation of UI concerns from the secure scanning engine core.</p>
+    </div>
+
+    <div class="arch-diagram">
+      <div class="layer">
+        <div class="layer-label">Interface Layer</div>
+        <div class="layer-blocks">
+          <div class="block"><strong>React 19 SPA</strong>Vite + Tailwind v4</div>
+          <div class="block"><strong>Flask UI</strong>Python + Jinja2</div>
+        </div>
+      </div>
+      
+      <div class="arrow"></div>
+      
+      <div class="layer" style="border-color: #06B6D4;">
+        <div class="layer-label" style="color: #06B6D4;">API & Logic Gateway</div>
+        <div class="layer-blocks">
+          <div class="block" style="border-color: #06B6D4;"><strong>Express API</strong>Node.js Router</div>
+          <div class="block" style="border-color: #06B6D4;"><strong>Engine Core</strong>Python scanner.py</div>
+        </div>
+        <div class="ssrf-gate">Multi-Layered<br>SSRF Gate</div>
+      </div>
+
+      <div class="arrow"></div>
+
+      <div class="layer">
+        <div class="layer-label">Persistence & Output</div>
+        <div class="layer-blocks">
+          <div class="block"><strong>SQLite Ledger</strong>webguard.db</div>
+          <div class="block"><strong>Report Gen</strong>ReportLab / jsPDF</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-cite">Technical Stack: Python 3.10+ / Node.js v20+</div>
+  </div>
+</body>
+</html>

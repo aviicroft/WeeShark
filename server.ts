@@ -4,6 +4,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import dns from 'dns';
+import net from 'net';
 
 export const app = express();
 const PORT = process.env.PORT || 3000;
@@ -75,35 +76,45 @@ app.post('/api/scan', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Invalid URL format. Please verify the web address.' });
   }
 
-  const hostname = parsed.hostname;
+  const hostname = parsed.hostname.replace(/^\[|\]$/g, '');
   if (!hostname) {
     return res.status(400).json({ error: 'Could not extract hostname from URL.' });
   }
 
-  // SSRF Protection check against hostname
-  const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '::1', 'metadata.google.internal'];
-  if (
-    blockedHosts.includes(hostname.toLowerCase()) ||
-    hostname.endsWith('.local') ||
-    hostname.endsWith('.internal')
-  ) {
-    return res.status(403).json({
-      error: 'Access to internal hostnames and localhost is strictly blocked (SSRF Protection).',
-    });
-  }
+  const isIp = net.isIP(hostname) !== 0;
 
-  // Express-level DNS SSRF resolution validation
-  try {
-    const lookup = await dns.promises.lookup(hostname);
-    if (isRestrictedIP(lookup.address)) {
+  if (isIp) {
+    if (isRestrictedIP(hostname)) {
       return res.status(403).json({
-        error: `Target resolves to restricted IP address (${lookup.address}). Scanning internal networks is prohibited (SSRF Protection).`,
+        error: `Target is a restricted IP address (${hostname}). Scanning internal networks is prohibited (SSRF Protection).`,
       });
     }
-  } catch {
-    return res.status(400).json({
-      error: `DNS resolution failed for hostname '${hostname}'. Verify domain name and internet connectivity.`,
-    });
+  } else {
+    // SSRF Protection check against hostname
+    const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '::1', 'metadata.google.internal'];
+    if (
+      blockedHosts.includes(hostname.toLowerCase()) ||
+      hostname.endsWith('.local') ||
+      hostname.endsWith('.internal')
+    ) {
+      return res.status(403).json({
+        error: 'Access to internal hostnames and localhost is strictly blocked (SSRF Protection).',
+      });
+    }
+
+    // Express-level DNS SSRF resolution validation
+    try {
+      const lookup = await dns.promises.lookup(hostname);
+      if (isRestrictedIP(lookup.address)) {
+        return res.status(403).json({
+          error: `Target resolves to restricted IP address (${lookup.address}). Scanning internal networks is prohibited (SSRF Protection).`,
+        });
+      }
+    } catch {
+      return res.status(400).json({
+        error: `DNS resolution failed for hostname '${hostname}'. Verify domain name and internet connectivity.`,
+      });
+    }
   }
 
   // Execute python scanner script

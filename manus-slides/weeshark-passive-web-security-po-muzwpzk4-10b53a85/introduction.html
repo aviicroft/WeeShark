@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0B1120; color: #F8FAFC; font-family: 'Inter', sans-serif; }
+    .slide-container { 
+      width: 1280px; 
+      min-height: 720px; 
+      background: #0B1120; 
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .motif { position: absolute; top: 30px; left: 60px; font-size: 14px; color: #94A3B8; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.1em; }
+    .slide-number { position: absolute; top: 30px; right: 60px; font-size: 14px; color: #94A3B8; font-family: 'Space Grotesk', sans-serif; }
+    
+    .slide-header { margin-bottom: 40px; }
+    .slide-title { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; color: #06B6D4; margin-bottom: 10px; }
+    .slide-subtitle { color: #94A3B8; font-size: 18px; }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      flex: 1;
+    }
+
+    .text-content { font-size: 20px; line-height: 1.6; color: #F8FAFC; }
+    .highlight-box {
+      border: 1px solid #334155;
+      background: #151E32;
+      padding: 30px;
+    }
+    .box-title { font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: #06B6D4; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.05em; }
+    
+    .list-item { margin-bottom: 24px; display: flex; align-items: flex-start; }
+    .list-icon { width: 20px; height: 2px; background: #06B6D4; margin-top: 12px; margin-right: 15px; flex-shrink: 0; }
+    .list-text strong { color: #06B6D4; display: block; margin-bottom: 4px; font-size: 18px; }
+    .list-text span { color: #94A3B8; font-size: 16px; }
+
+    .footer-cite { position: absolute; bottom: 30px; left: 60px; font-size: 14px; color: #94A3B8; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="motif">[ W-SHARK // INTRO ]</div>
+    <div class="slide-number">02 / 10</div>
+    
+    <div class="slide-header">
+      <h2 class="slide-title">Introduction | Making Posture Visible</h2>
+      <p class="slide-subtitle">Framing the necessity of low-impact, passive security auditing.</p>
+    </div>
+
+    <div class="main-grid">
+      <div class="text-content">
+        <p style="margin-bottom: 20px;">Modern web security requires continuous assessment of the visible surface area. While invasive penetration testing is critical, it often lacks the lightweight repeatability needed for baseline posture monitoring.</p>
+        <p><strong>WeeShark</strong> bridges this gap by providing a deterministic, non-destructive audit engine that evaluates the defensive configuration of public-facing assets without service interruption.</p>
+      </div>
+      
+      <div class="highlight-box">
+        <h3 class="box-title">Core Assessment Vectors</h3>
+        
+        <div class="list-item">
+          <div class="list-icon"></div>
+          <div class="list-text">
+            <strong>Transport Hygiene</strong>
+            <span>Evaluating TLS handshake validity and protocol version compliance.</span>
+          </div>
+        </div>
+
+        <div class="list-item">
+          <div class="list-icon"></div>
+          <div class="list-text">
+            <strong>Defensive Response Headers</strong>
+            <span>Validating CSP, HSTS, XFO, and XCTO configurations.</span>
+          </div>
+        </div>
+
+        <div class="list-item">
+          <div class="list-icon"></div>
+          <div class="list-text">
+            <strong>Privacy Controls</strong>
+            <span>Inspecting cookie attributes (Secure, HttpOnly, SameSite).</span>
+          </div>
+        </div>
+
+        <div class="list-item">
+          <div class="list-icon"></div>
+          <div class="list-text">
+            <strong>Exposure Management</strong>
+            <span>Detecting service banners and unauthorized port accessibility.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-cite">Source: WeeShark Technical Specification (2026)</div>
+  </div>
+</body>
+</html>

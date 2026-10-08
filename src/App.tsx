@@ -84,6 +84,8 @@ interface ScanRecord {
   target_url: string;
   hostname: string;
   resolved_ip: string;
+  is_ip?: boolean;
+  reverse_dns?: string | null;
   geo?: GeoData;
   http_status: number | null;
   scan_date: string;
@@ -141,6 +143,8 @@ export const normalizeScan = (s: any): ScanRecord => {
     score: typeof s.score === 'number' ? s.score : 0,
     risk_level: s.risk_level || 'MEDIUM',
     badge_color: s.badge_color || 'amber',
+    is_ip: Boolean(s.is_ip),
+    reverse_dns: s.reverse_dns || null,
     geo: s.geo || {},
     checks: {
       https: s.checks?.https || {
@@ -722,6 +726,14 @@ export default function App() {
                       <span className="flex items-center gap-1.5">
                         IP: <strong className="font-mono text-cyan-300 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">{activeScan.resolved_ip}</strong>
                       </span>
+                      {activeScan.reverse_dns && (
+                        <>
+                          <span>·</span>
+                          <span className="flex items-center gap-1.5">
+                            PTR: <strong className="font-mono text-cyan-300 bg-cyan-950/40 border border-cyan-500/20 px-2 py-0.5 rounded">{activeScan.reverse_dns}</strong>
+                          </span>
+                        </>
+                      )}
                       {activeScan.geo?.country && (
                         <>
                           <span>·</span>
@@ -888,12 +900,12 @@ export default function App() {
               className="flex flex-col sm:flex-row gap-3 mb-4"
             >
               <div className="relative flex-1 flex items-center bg-slate-900 border border-slate-700 rounded-lg px-4 focus-within:border-cyan-400 focus-within:ring-1 focus-within:ring-cyan-400 transition-all">
-                <span className="text-xs font-mono text-slate-500 mr-2 select-none">https://</span>
+                <span className="text-xs font-mono text-cyan-400/80 mr-2 select-none">Target:</span>
                 <input
                   type="text"
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
-                  placeholder="example.com"
+                  placeholder="example.com or 104.21.5.12 (Public IP)"
                   disabled={isScanning}
                   className="w-full bg-transparent text-white font-mono text-sm py-3.5 focus:outline-none placeholder:text-slate-600"
                   autoComplete="off"
@@ -922,18 +934,23 @@ export default function App() {
             {/* Quick Safe Targets */}
             <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500 mb-8">
               <span>Quick safe test targets:</span>
-              {['example.com', 'cloudflare.com', 'github.com', 'wikipedia.org'].map((target) => (
+              {[
+                { label: 'example.com', val: 'example.com' },
+                { label: 'cloudflare.com', val: 'cloudflare.com' },
+                { label: '104.21.5.12 (Public IP)', val: '104.21.5.12' },
+                { label: 'github.com', val: 'github.com' },
+              ].map((item) => (
                 <button
-                  key={target}
+                  key={item.val}
                   type="button"
                   onClick={() => {
-                    setUrlInput(target);
-                    handleStartScan(target);
+                    setUrlInput(item.val);
+                    handleStartScan(item.val);
                   }}
                   disabled={isScanning}
                   className="font-mono text-slate-400 hover:text-cyan-400 bg-slate-900 hover:bg-slate-800 border border-slate-800 px-2 py-1 rounded transition-colors"
                 >
-                  {target}
+                  {item.label}
                 </button>
               ))}
             </div>

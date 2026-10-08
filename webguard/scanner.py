@@ -208,9 +208,26 @@ def get_ip_geolocation(ip_str):
     return default_geo
 
 
+def get_reverse_dns(ip_str):
+    """
+    Performs a PTR reverse DNS query to discover associated domain names for an IP address.
+    Returns PTR hostname string or None.
+    """
+    if not ip_str or is_private_or_restricted_ip(ip_str):
+        return None
+    try:
+        host_info = socket.gethostbyaddr(ip_str)
+        if host_info and host_info[0]:
+            return host_info[0]
+    except Exception:
+        pass
+    return None
+
+
 def validate_url(url_input):
     """
     Validates user input URL, parses components, and enforces SSRF boundaries.
+    Supports both domain names and raw public IP addresses.
     Returns: (normalized_url, hostname, resolved_ip) or raises ValueError
     """
     if not url_input or not isinstance(url_input, str):
@@ -240,15 +257,29 @@ def validate_url(url_input):
     if hostname.lower() in blocked_hosts or hostname.lower().endswith(".local") or hostname.lower().endswith(".internal"):
         raise ValueError("Access to internal hostnames and localhost is strictly blocked (SSRF Protection).")
 
-    # Resolve hostname to IPv4/IPv6
+    # Check if hostname is an IP literal
+    clean_host = hostname.strip("[]")
+    is_ip = False
     try:
-        resolved_ip = socket.gethostbyname(hostname)
-    except socket.gaierror:
-        raise ValueError(f"DNS failure: Could not resolve hostname '{hostname}'. Verify the domain name.")
+        ip_obj = ipaddress.ip_address(clean_host)
+        is_ip = True
+    except ValueError:
+        is_ip = False
 
-    # Verify resolved IP against SSRF blacklists
-    if is_private_or_restricted_ip(resolved_ip):
-        raise ValueError(f"Target resolves to restricted/private IP address ({resolved_ip}). Scanning internal resources is prohibited (SSRF Protection).")
+    if is_ip:
+        if is_private_or_restricted_ip(str(ip_obj)):
+            raise ValueError(f"Target resolves to restricted/private IP address ({ip_obj}). Scanning internal resources is prohibited (SSRF Protection).")
+        resolved_ip = str(ip_obj)
+    else:
+        # Resolve hostname to IPv4/IPv6
+        try:
+            resolved_ip = socket.gethostbyname(hostname)
+        except socket.gaierror:
+            raise ValueError(f"DNS failure: Could not resolve hostname '{hostname}'. Verify the domain name.")
+
+        # Verify resolved IP against SSRF blacklists
+        if is_private_or_restricted_ip(resolved_ip):
+            raise ValueError(f"Target resolves to restricted/private IP address ({resolved_ip}). Scanning internal resources is prohibited (SSRF Protection).")
 
     return url, hostname, resolved_ip
 
@@ -733,17 +764,29 @@ def generate_recommendations(https_res, headers_res, cookies_res, server_res, po
 def scan_target(target_url_input):
     """
     Main real-time scanning workflow:
-    1. Validates URL & enforces SSRF rules
+    1. Validates URL / IP & enforces SSRF rules
     2. Records actual start timestamp
-    3. Performs HTTP/HTTPS connection & pulls headers & cookies
-    4. Evaluates HTTPS, Headers, Cookies, Server Disclosure, Common Ports
+    3. Performs HTTP/HTTPS connection with fallback, pulling headers & cookies
+    4. Evaluates HTTPS, Headers, Cookies, Server Disclosure, Common Ports, Reverse DNS
     5. Calculates dynamic score & risk level
-    6. Generates recommendations
+    6. Generates actionable recommendations
     7. Records completion timestamp and duration
-    8. Appends to scan history
+    8. Appends to scan history & SQLite
     """
     # Step 1: Validate URL & SSRF
     url, hostname, resolved_ip = validate_url(target_url_input)
+
+    # Detect if target is an IP literal
+    clean_host = hostname.strip("[]")
+    is_ip_target = False
+    try:
+        ipaddress.ip_address(clean_host)
+        is_ip_target = True
+    except ValueError:
+        is_ip_target = False
+
+    # Reverse DNS resolution
+    reverse_dns = get_reverse_dns(resolved_ip)
 
     # Step 2: Record actual scan start time
     start_time_dt = datetime.now()
@@ -759,36 +802,59 @@ def scan_target(target_url_input):
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
     }
 
-    try:
-        # Create opener with SafeRedirectHandler to prevent open-redirect SSRF bypasses
-        req = urllib.request.Request(url, headers=request_headers)
-        ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
+    # Determine probe order: try primary URL first, with HTTP fallback if HTTPS was auto-prefixed
+    urls_to_try = [url]
+    has_explicit_https = target_url_input.strip().lower().startswith("https://")
+    if not has_explicit_https and url.lower().startswith("https://"):
+        urls_to_try.append("http://" + url[8:])
 
-        opener = urllib.request.build_opener(
-            SafeRedirectHandler(),
-            urllib.request.HTTPSHandler(context=ctx)
-        )
-        with opener.open(req, timeout=6.0) as response:
-            http_status_code = response.status
-            for key, val in response.headers.items():
+    last_conn_error = None
+    request_succeeded = False
+
+    for attempt_url in urls_to_try:
+        try:
+            req = urllib.request.Request(attempt_url, headers=request_headers)
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+
+            opener = urllib.request.build_opener(
+                SafeRedirectHandler(),
+                urllib.request.HTTPSHandler(context=ctx)
+            )
+            with opener.open(req, timeout=5.0) as response:
+                http_status_code = response.status
+                for key, val in response.headers.items():
+                    headers_dict[key] = val
+                raw_cookies = response.headers.get_all("Set-Cookie") or []
+            request_succeeded = True
+            url = attempt_url
+            break
+        except urllib.error.HTTPError as e:
+            http_status_code = e.code
+            for key, val in e.headers.items():
                 headers_dict[key] = val
-            raw_cookies = response.headers.get_all("Set-Cookie") or []
-    except urllib.error.HTTPError as e:
-        http_status_code = e.code
-        for key, val in e.headers.items():
-            headers_dict[key] = val
-        raw_cookies = e.headers.get_all("Set-Cookie") or []
-    except ValueError as e:
-        raise ValueError(f"Security validation error: {str(e)}")
-    except urllib.error.URLError as e:
-        # Connection failed or refused
-        raise ConnectionError(f"Unable to connect to target website ({e.reason}). Please verify the domain and ensure the server is online.")
-    except socket.timeout:
-        raise TimeoutError("Target server took too long to respond (Request Timeout).")
-    except Exception as e:
-        raise ConnectionError(f"Connection error while scanning target: {str(e)}")
+            raw_cookies = e.headers.get_all("Set-Cookie") or []
+            request_succeeded = True
+            url = attempt_url
+            break
+        except ValueError as e:
+            raise ValueError(f"Security validation error: {str(e)}")
+        except (urllib.error.URLError, socket.timeout, ConnectionError, OSError) as e:
+            last_conn_error = e
+            continue
+        except Exception as e:
+            last_conn_error = e
+            continue
+
+    if not request_succeeded:
+        if is_ip_target:
+            # For IP targets without an HTTP daemon on port 80/443, do not crash.
+            # Proceed with port checks, GeoIP, PTR, and score calculation.
+            http_status_code = None
+        else:
+            reason = getattr(last_conn_error, 'reason', str(last_conn_error)) if last_conn_error else "Connection failed"
+            raise ConnectionError(f"Unable to connect to target website ({reason}). Please verify the domain and ensure the server is online.")
 
     # Step 4: Perform real-time security checks & network geolocation
     https_result = check_https(url, hostname)
@@ -817,6 +883,8 @@ def scan_target(target_url_input):
         "target_url": url,
         "hostname": hostname,
         "resolved_ip": resolved_ip,
+        "is_ip": is_ip_target,
+        "reverse_dns": reverse_dns,
         "geo": geo_result,
         "http_status": http_status_code,
         "scan_date": scan_date_str,
@@ -869,6 +937,8 @@ def save_to_history(scan_result):
             "target_url": scan_result["target_url"],
             "hostname": scan_result["hostname"],
             "resolved_ip": scan_result.get("resolved_ip", ""),
+            "is_ip": scan_result.get("is_ip", False),
+            "reverse_dns": scan_result.get("reverse_dns"),
             "geo": scan_result.get("geo", {}),
             "score": scan_result["score"],
             "risk_level": scan_result["risk_level"],

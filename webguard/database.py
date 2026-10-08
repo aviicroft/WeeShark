@@ -49,11 +49,15 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    # Migration: check if geo_json column exists for existing tables
+    # Migrations: check for optional columns
     cursor.execute("PRAGMA table_info(scans)")
     columns = [row["name"] for row in cursor.fetchall()]
     if "geo_json" not in columns:
         cursor.execute("ALTER TABLE scans ADD COLUMN geo_json TEXT")
+    if "reverse_dns" not in columns:
+        cursor.execute("ALTER TABLE scans ADD COLUMN reverse_dns TEXT")
+    if "is_ip" not in columns:
+        cursor.execute("ALTER TABLE scans ADD COLUMN is_ip INTEGER DEFAULT 0")
     conn.commit()
     conn.close()
 
@@ -79,8 +83,8 @@ def save_scan(scan_data):
             target_url, hostname, resolved_ip, http_status,
             scan_date, scan_time, scan_timestamp, scan_duration, duration_seconds,
             score, risk_level, badge_color, issues_count,
-            checks_json, recommendations_json, geo_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            checks_json, recommendations_json, geo_json, reverse_dns, is_ip
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         scan_data.get("target_url"),
         scan_data.get("hostname"),
@@ -97,7 +101,9 @@ def save_scan(scan_data):
         issues_count,
         json.dumps(checks),
         json.dumps(recs),
-        json.dumps(geo)
+        json.dumps(geo),
+        scan_data.get("reverse_dns"),
+        1 if scan_data.get("is_ip") else 0
     ))
 
     scan_id = cursor.lastrowid
@@ -123,6 +129,8 @@ def row_to_dict(row):
         d["geo"] = json.loads(d.get("geo_json") or "{}") or {}
     except Exception:
         d["geo"] = {}
+    d["reverse_dns"] = d.get("reverse_dns")
+    d["is_ip"] = bool(d.get("is_ip", 0))
     return d
 
 

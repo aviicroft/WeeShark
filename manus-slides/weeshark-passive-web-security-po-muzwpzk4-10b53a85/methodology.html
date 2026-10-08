@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0B1120; color: #F8FAFC; font-family: 'Inter', sans-serif; }
+    .slide-container { 
+      width: 1280px; 
+      min-height: 720px; 
+      background: #0B1120; 
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .motif { position: absolute; top: 30px; left: 60px; font-size: 14px; color: #94A3B8; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.1em; }
+    .slide-number { position: absolute; top: 30px; right: 60px; font-size: 14px; color: #94A3B8; font-family: 'Space Grotesk', sans-serif; }
+    
+    .slide-header { margin-bottom: 60px; }
+    .slide-title { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; color: #06B6D4; margin-bottom: 10px; }
+    .slide-subtitle { color: #94A3B8; font-size: 18px; }
+
+    .pipeline {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-top: 60px;
+      position: relative;
+      flex: 1;
+    }
+
+    .pipeline::before {
+      content: '';
+      position: absolute;
+      top: 25px;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #334155;
+      z-index: 1;
+    }
+
+    .step {
+      width: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      z-index: 2;
+    }
+
+    .dot {
+      width: 50px;
+      height: 50px;
+      border: 2px solid #06B6D4;
+      background: #0B1120;
+      border-radius: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #06B6D4;
+      margin-bottom: 25px;
+    }
+
+    .step-title { font-family: 'Space Grotesk', sans-serif; font-size: 18px; color: #F8FAFC; margin-bottom: 12px; }
+    .step-desc { font-size: 14px; color: #94A3B8; line-height: 1.5; }
+
+    .method-details {
+      margin-top: 40px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 30px;
+      padding: 30px;
+      border: 1px solid #334155;
+      background: #151E32;
+    }
+    .detail-item { font-size: 16px; color: #94A3B8; }
+    .detail-item strong { color: #06B6D4; display: inline-block; width: 140px; }
+
+    .footer-cite { position: absolute; bottom: 30px; left: 60px; font-size: 14px; color: #94A3B8; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="motif">[ W-SHARK // METHOD ]</div>
+    <div class="slide-number">05 / 10</div>
+    
+    <div class="slide-header">
+      <h2 class="slide-title">Research Methodology | A Deterministic Audit Pipeline</h2>
+      <p class="slide-subtitle">Documenting the end-to-end execution flow of a passive assessment.</p>
+    </div>
+
+    <div class="pipeline">
+      <div class="step">
+        <div class="dot">01</div>
+        <h3 class="step-title">Ingest & Sanitize</h3>
+        <p class="step-desc">Input normalization and protocol strictness enforcement (HTTP/S only).</p>
+      </div>
+      <div class="step">
+        <div class="dot">02</div>
+        <h3 class="step-title">SSRF Gate</h3>
+        <p class="step-desc">DNS pre-resolution and multi-tier IP boundary validation.</p>
+      </div>
+      <div class="step">
+        <div class="dot">03</div>
+        <h3 class="step-title">Bounded Probe</h3>
+        <p class="step-desc">Concurrent, non-destructive TLS, HTTP, and socket verification.</p>
+      </div>
+      <div class="step">
+        <div class="dot">04</div>
+        <h3 class="step-title">Score & Advise</h3>
+        <p class="step-desc">Weighted quantification and remediation guidance generation.</p>
+      </div>
+      <div class="step">
+        <div class="dot">05</div>
+        <h3 class="step-title">Persist</h3>
+        <p class="step-desc">Commit to SQLite ledger and hydration for reporting.</p>
+      </div>
+    </div>
+
+    <div class="method-details">
+      <div class="detail-item"><strong>Protocol Gate:</strong> Only http:// and https:// schemes are accepted.</div>
+      <div class="detail-item"><strong>Network Safety:</strong> 1.2s socket timeouts to prevent hanging probes.</div>
+      <div class="detail-item"><strong>SSRF Boundary:</strong> DNS resolving prior to any outbound connection attempt.</div>
+      <div class="detail-item"><strong>Automation:</strong> Parallelized execution for real-time responsiveness.</div>
+    </div>
+
+    <div class="footer-cite">Methodology: Automated Passive Assessment</div>
+  </div>
+</body>
+</html>

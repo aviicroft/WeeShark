@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0B1120; color: #F8FAFC; font-family: 'Inter', sans-serif; }
+    .slide-container { 
+      width: 1280px; 
+      min-height: 720px; 
+      background: #0B1120; 
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .motif { position: absolute; top: 30px; left: 60px; font-size: 14px; color: #94A3B8; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.1em; }
+    .slide-number { position: absolute; top: 30px; right: 60px; font-size: 14px; color: #94A3B8; font-family: 'Space Grotesk', sans-serif; }
+    
+    .slide-header { margin-bottom: 40px; }
+    .slide-title { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; color: #06B6D4; margin-bottom: 10px; }
+    .slide-subtitle { color: #94A3B8; font-size: 18px; }
+
+    .refs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      flex: 1;
+    }
+
+    .citation-list { list-style: decimal-leading-zero; color: #94A3B8; padding-left: 20px; }
+    .citation-list li { margin-bottom: 15px; padding-left: 10px; font-size: 14px; line-height: 1.5; }
+    .citation-list li strong { color: #F8FAFC; font-weight: 400; }
+
+    .warning-box {
+      background: #151E32;
+      border: 1px solid #F59E0B;
+      padding: 30px;
+      height: fit-content;
+    }
+    .warning-title { font-family: 'Space Grotesk', sans-serif; font-size: 16px; color: #F59E0B; margin-bottom: 15px; text-transform: uppercase; display: flex; align-items: center; }
+    .warning-text { font-size: 15px; line-height: 1.6; color: #F8FAFC; }
+    .warning-text strong { color: #F59E0B; }
+
+    .footer-cite { position: absolute; bottom: 30px; left: 60px; font-size: 14px; color: #94A3B8; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="motif">[ W-SHARK // REFS ]</div>
+    <div class="slide-number">10 / 10</div>
+    
+    <div class="slide-header">
+      <h2 class="slide-title">References & Responsible Use</h2>
+      <p class="slide-subtitle">Traceable literature and project sources.</p>
+    </div>
+
+    <div class="refs-grid">
+      <div class="left-col">
+        <ul class="citation-list">
+          <li><strong>Buchanan, W. J., Helme, S., & Woodward, A. (2018).</strong> Analysis of the adoption of security headers in HTTP. IET Information Security, 12(2), 145-152.</li>
+          <li><strong>NIST. (2019).</strong> Special Publication 800-52 Revision 2: Guidelines for the Selection, Configuration, and Use of TLS Implementations.</li>
+          <li><strong>OWASP Foundation. (2026).</strong> HTTP Security Response Headers Cheat Sheet. OWASP Cheat Sheet Series.</li>
+          <li><strong>OWASP Foundation. (2026).</strong> Server-Side Request Forgery (SSRF) Prevention Cheat Sheet.</li>
+          <li><strong>WeeShark Project Team. (2026).</strong> WeeShark Technical Architecture & System Design Specification.</li>
+        </ul>
+      </div>
+      
+      <div class="right-col">
+        <div class="warning-box">
+          <div class="warning-title">⚠️ Responsible Use Warning</div>
+          <div class="warning-text">
+            WeeShark is designed for <strong>authorized defensive audits only</strong>. Performing network scans or port probes against third-party systems without explicit written consent may violate cybersecurity laws and regulations. Users are responsible for ensuring all assessment targets are within their <strong>authorized scope</strong>.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-cite">Project Repository: https://github.com/aviicroft/WeeShark</div>
+  </div>
+</body>
+</html>

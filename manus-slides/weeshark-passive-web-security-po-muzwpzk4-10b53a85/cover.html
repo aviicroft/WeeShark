@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0B1120; color: #F8FAFC; font-family: 'Inter', sans-serif; overflow: hidden; }
+    .slide-container { 
+      width: 1280px; 
+      min-height: 720px; 
+      background: #0B1120; 
+      display: flex; 
+      position: relative;
+      padding: 60px;
+    }
+    .motif {
+      position: absolute;
+      top: 30px;
+      left: 60px;
+      font-size: 14px;
+      color: #94A3B8;
+      font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: 0.1em;
+    }
+    .slide-number {
+      position: absolute;
+      top: 30px;
+      right: 60px;
+      font-size: 14px;
+      color: #94A3B8;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .content-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      z-index: 2;
+    }
+    .title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 64px;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      color: #F8FAFC;
+    }
+    .subtitle {
+      font-size: 24px;
+      color: #06B6D4;
+      font-weight: 400;
+      max-width: 500px;
+      line-height: 1.4;
+    }
+    .divider {
+      width: 100px;
+      height: 4px;
+      background: #06B6D4;
+      margin-top: 40px;
+    }
+    .illustration-right {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 600px;
+      height: 720px;
+      overflow: hidden;
+      z-index: 1;
+    }
+    .illustration-right img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.8;
+      mask-image: linear-gradient(to left, black 60%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to left, black 60%, transparent 100%);
+    }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="motif">[ W-SHARK // RESEARCH ]</div>
+    <div class="slide-number">01 / 10</div>
+    
+    <div class="content-left">
+      <h1 class="title">WeeShark:<br>Passive Web Security<br>Posture Assessment</h1>
+      <p class="subtitle">A lightweight, deterministic audit engine for authorized defensive security evaluations.</p>
+      <div class="divider"></div>
+    </div>
+
+    <div class="illustration-right">
+      <img src="C:\Users\ajind\OneDrive\Documents\GitHub\WeeShark\.work\weeshark_research_deck\assets\weeshark_cover.png" alt="WeeShark Cover Illustration">
+    </div>
+  </div>
+</body>
+</html>

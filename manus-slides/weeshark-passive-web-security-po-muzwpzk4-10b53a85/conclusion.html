@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0B1120; color: #F8FAFC; font-family: 'Inter', sans-serif; }
+    .slide-container { 
+      width: 1280px; 
+      min-height: 720px; 
+      background: #0B1120; 
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .motif { position: absolute; top: 30px; left: 60px; font-size: 14px; color: #94A3B8; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.1em; }
+    .slide-number { position: absolute; top: 30px; right: 60px; font-size: 14px; color: #94A3B8; font-family: 'Space Grotesk', sans-serif; }
+    
+    .slide-header { margin-bottom: 60px; }
+    .slide-title { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; color: #06B6D4; margin-bottom: 10px; }
+    .slide-subtitle { color: #94A3B8; font-size: 18px; }
+
+    .takeaways-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      flex: 1;
+    }
+
+    .conclusion-block {
+      border: 1px solid #334155;
+      background: #151E32;
+      padding: 30px;
+    }
+    .conclusion-title { font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: #06B6D4; margin-bottom: 25px; text-transform: uppercase; }
+    
+    .point { margin-bottom: 24px; display: flex; align-items: flex-start; }
+    .point-dot { width: 12px; height: 12px; border: 2px solid #06B6D4; margin-top: 6px; margin-right: 20px; flex-shrink: 0; }
+    .point-text { font-size: 18px; color: #F8FAFC; line-height: 1.5; }
+    .point-text span { color: #94A3B8; display: block; margin-top: 4px; font-size: 16px; }
+
+    .footer-cite { position: absolute; bottom: 30px; left: 60px; font-size: 14px; color: #94A3B8; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="motif">[ W-SHARK // CONCL ]</div>
+    <div class="slide-number">09 / 10</div>
+    
+    <div class="slide-header">
+      <h2 class="slide-title">Conclusion & Future Scope</h2>
+      <p class="slide-subtitle">Summarizing the contribution to passive security auditing.</p>
+    </div>
+
+    <div class="takeaways-grid">
+      <div class="conclusion-block">
+        <h3 class="conclusion-title">Key Contributions</h3>
+        
+        <div class="point">
+          <div class="point-dot"></div>
+          <div class="point-text">
+            Deterministic Posture Quantification
+            <span>Establishing a repeatable baseline across five assessment vectors.</span>
+          </div>
+        </div>
+
+        <div class="point">
+          <div class="point-dot"></div>
+          <div class="point-text">
+            Hardened Safety Boundary
+            <span>Multi-tier SSRF prevention ensures authorized-only defensive use.</span>
+          </div>
+        </div>
+
+        <div class="point">
+          <div class="point-dot"></div>
+          <div class="point-text">
+            Accessible Remediation
+            <span>Actionable recommendations translated from raw header/TLS signals.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="conclusion-block" style="border-color: #06B6D4;">
+        <h3 class="conclusion-title" style="color: #06B6D4;">Future Research</h3>
+        
+        <div class="point">
+          <div class="point-dot" style="border-color: #06B6D4;"></div>
+          <div class="point-text">
+            Large-Scale Empirical Validation
+            <span>Scanning Top 1M domains to benchmark the WeeShark scoring model.</span>
+          </div>
+        </div>
+
+        <div class="point">
+          <div class="point-dot" style="border-color: #06B6D4;"></div>
+          <div class="point-text">
+            Extended Service Fingerprinting
+            <span>Detecting a broader range of exposed administrative interfaces.</span>
+          </div>
+        </div>
+
+        <div class="point">
+          <div class="point-dot" style="border-color: #06B6D4;"></div>
+          <div class="point-text">
+            Trend Analysis over Time
+            <span>Historical tracking of posture drift within organizational assets.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-cite">Continuous Improvement in Defensive Security</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0B1120; color: #F8FAFC; font-family: 'Inter', sans-serif; }
+    .slide-container { 
+      width: 1280px; 
+      min-height: 720px; 
+      background: #0B1120; 
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .motif { position: absolute; top: 30px; left: 60px; font-size: 14px; color: #94A3B8; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.1em; }
+    .slide-number { position: absolute; top: 30px; right: 60px; font-size: 14px; color: #94A3B8; font-family: 'Space Grotesk', sans-serif; }
+    
+    .slide-header { margin-bottom: 40px; }
+    .slide-title { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; color: #06B6D4; margin-bottom: 10px; }
+    .slide-subtitle { color: #94A3B8; font-size: 18px; }
+
+    .scoring-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 40px;
+      flex: 1;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { text-align: left; padding: 15px; border-bottom: 2px solid #06B6D4; font-family: 'Space Grotesk', sans-serif; color: #06B6D4; font-size: 16px; text-transform: uppercase; }
+    td { padding: 15px; border-bottom: 1px solid #334155; font-size: 16px; color: #F8FAFC; }
+    .weight { color: #06B6D4; font-weight: 700; text-align: center; }
+
+    .risk-bands {
+      background: #151E32;
+      border: 1px solid #334155;
+      padding: 30px;
+    }
+    .band-item { margin-bottom: 25px; }
+    .band-label { font-family: 'Space Grotesk', sans-serif; font-size: 14px; text-transform: uppercase; margin-bottom: 8px; }
+    .band-bar-outer { width: 100%; height: 8px; background: #334155; position: relative; }
+    .band-bar-inner { height: 100%; position: absolute; top: 0; left: 0; }
+    .band-desc { font-size: 12px; color: #94A3B8; margin-top: 6px; }
+
+    .footer-cite { position: absolute; bottom: 30px; left: 60px; font-size: 14px; color: #94A3B8; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="motif">[ W-SHARK // SCORING ]</div>
+    <div class="slide-number">07 / 10</div>
+    
+    <div class="slide-header">
+      <h2 class="slide-title">Measurement Model | Five Signals, One Score</h2>
+      <p class="slide-subtitle">A weighted quantification of visible security controls.</p>
+    </div>
+
+    <div class="scoring-grid">
+      <table>
+        <thead>
+          <tr>
+            <th>Assessment Vector</th>
+            <th>Criteria</th>
+            <th class="weight">Max Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>HTTPS Encryption</td>
+            <td>TLS Handshake + Protocol Validity</td>
+            <td class="weight">25</td>
+          </tr>
+          <tr>
+            <td>Security Headers</td>
+            <td>CSP, HSTS, XFO, XCTO Presence</td>
+            <td class="weight">35</td>
+          </tr>
+          <tr>
+            <td>Cookie Attributes</td>
+            <td>Secure, HttpOnly, SameSite Flags</td>
+            <td class="weight">15</td>
+          </tr>
+          <tr>
+            <td>Info Disclosure</td>
+            <td>Software Banner Suppression</td>
+            <td class="weight">10</td>
+          </tr>
+          <tr>
+            <td>Port Hygiene</td>
+            <td>Unauthorized Service Exposure</td>
+            <td class="weight">15</td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div class="risk-bands">
+        <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 18px; margin-bottom: 30px; color: #06B6D4;">Risk Classifications</h3>
+        
+        <div class="band-item">
+          <div class="band-label" style="color: #10B981;">EXCELLENT (90-100)</div>
+          <div class="band-bar-outer"><div class="band-bar-inner" style="width: 100%; background: #10B981;"></div></div>
+          <div class="band-desc">Robust defensive configuration.</div>
+        </div>
+
+        <div class="band-item">
+          <div class="band-label" style="color: #06B6D4;">GOOD (75-89)</div>
+          <div class="band-bar-outer"><div class="band-bar-inner" style="width: 80%; background: #06B6D4;"></div></div>
+          <div class="band-desc">Solid baseline; minor gaps.</div>
+        </div>
+
+        <div class="band-item">
+          <div class="band-label" style="color: #F59E0B;">MEDIUM (50-74)</div>
+          <div class="band-bar-outer"><div class="band-bar-inner" style="width: 60%; background: #F59E0B;"></div></div>
+          <div class="band-desc">Missing critical headers or flags.</div>
+        </div>
+
+        <div class="band-item">
+          <div class="band-label" style="color: #F43F5E;">CRITICAL (0-49)</div>
+          <div class="band-bar-outer"><div class="band-bar-inner" style="width: 40%; background: #F43F5E;"></div></div>
+          <div class="band-desc">Significant unencrypted exposure.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-cite">Metric Calibration: Grounded in NIST/OWASP guidance.</div>
+  </div>
+</body>
+</html>
