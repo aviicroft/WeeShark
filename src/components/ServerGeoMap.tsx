@@ -75,11 +75,33 @@ export const ServerGeoMap: React.FC<ServerGeoMapProps> = ({
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
 
   const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [localTime, setLocalTime] = useState<string>('');
+
+  // Dynamically load Mapbox token from environment or config endpoint - NO hardcoded secrets
+  const [mapboxToken, setMapboxToken] = useState<string>(
+    () =>
+      ((import.meta as any).env?.VITE_MAPBOX_TOKEN?.trim() ||
+        (import.meta as any).env?.MAPBOX_TOKEN?.trim() ||
+        '')
+  );
+
+  useEffect(() => {
+    if (!mapboxToken) {
+      fetch('/api/config')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.mapbox_token) {
+            setMapboxToken(data.mapbox_token.trim());
+          }
+        })
+        .catch(() => {});
+    }
+  }, [mapboxToken]);
 
   const lat = geo?.latitude ?? 0;
   const lng = geo?.longitude ?? 0;
@@ -137,26 +159,6 @@ export const ServerGeoMap: React.FC<ServerGeoMapProps> = ({
         scrollWheelZoom: true,
       });
 
-      // Always use Mapbox dark-v11 tiles with official Mapbox · OpenStreetMap attribution
-      const DEFAULT_MAPBOX_TOKEN =
-        'pk.eyJ1IjoiYXZpaWNyb2Z0IiwiYSI6ImNtdXp1MmRkMzA3ZzkyeXF5cHp6Y2ptdXMifQ.tubj9TNKBuFUzvuj7Mdx-Q';
-      const mapboxToken =
-        (import.meta as any).env?.VITE_MAPBOX_TOKEN?.trim() ||
-        (import.meta as any).env?.MAPBOX_TOKEN?.trim() ||
-        DEFAULT_MAPBOX_TOKEN;
-
-      const tileLayer = L.tileLayer(
-        `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`,
-        {
-          tileSize: 512,
-          zoomOffset: -1,
-          maxZoom: 19,
-          attribution: '© Mapbox © OpenStreetMap',
-        }
-      );
-
-      tileLayer.addTo(map);
-
       // Attribution control: displays "Mapbox · OpenStreetMap | © Mapbox © OpenStreetMap"
       L.control
         .attribution({
@@ -173,6 +175,34 @@ export const ServerGeoMap: React.FC<ServerGeoMapProps> = ({
     }
 
     const map = mapInstanceRef.current;
+
+    // Dynamically manage tile layer using Mapbox Dark-v11 tiles
+    if (tileLayerRef.current) {
+      tileLayerRef.current.remove();
+      tileLayerRef.current = null;
+    }
+
+    const layer = mapboxToken
+      ? L.tileLayer(
+          `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`,
+          {
+            tileSize: 512,
+            zoomOffset: -1,
+            maxZoom: 19,
+            attribution: '© Mapbox © OpenStreetMap',
+          }
+        )
+      : L.tileLayer(
+          'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+          {
+            subdomains: 'abcd',
+            maxZoom: 19,
+            attribution: '© Mapbox © OpenStreetMap',
+          }
+        );
+
+    layer.addTo(map);
+    tileLayerRef.current = layer;
 
     // Remove prior marker
     if (markerRef.current) {
@@ -232,7 +262,7 @@ export const ServerGeoMap: React.FC<ServerGeoMapProps> = ({
     return () => {
       clearTimeout(timer);
     };
-  }, [lat, lng, hasValidCoords, ip, geo, hostname]);
+  }, [lat, lng, hasValidCoords, ip, geo, hostname, mapboxToken]);
 
   // Clean up on component unmount
   useEffect(() => {

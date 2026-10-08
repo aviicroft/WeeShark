@@ -210,6 +210,13 @@ print(json.dumps(stats))
   }
 });
 
+// API: Client Configuration (Passes runtime env tokens to frontend without hardcoding in files)
+app.get('/api/config', (_req: Request, res: Response) => {
+  return res.json({
+    mapbox_token: (process.env.VITE_MAPBOX_TOKEN || process.env.MAPBOX_TOKEN || '').trim(),
+  });
+});
+
 // API: Get Scan History (All scans from SQLite)
 app.get('/api/history', async (_req: Request, res: Response) => {
   try {

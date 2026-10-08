@@ -210,15 +210,24 @@ document.addEventListener("DOMContentLoaded", function() {
             attributionControl: false
         });
 
-        var defaultMapboxToken = "pk.eyJ1IjoiYXZpaWNyb2Z0IiwiYSI6ImNtdXp1MmRkMzA3ZzkyeXF5cHp6Y2ptdXMifQ.tubj9TNKBuFUzvuj7Mdx-Q";
-        var mapboxToken = ("{{ mapbox_token or '' }}").trim() || defaultMapboxToken;
+        var mapboxToken = ("{{ mapbox_token or '' }}").trim();
 
-        var tileLayer = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=' + mapboxToken, {
-            tileSize: 512,
-            zoomOffset: -1,
-            maxZoom: 19,
-            attribution: '© Mapbox © OpenStreetMap'
-        }).addTo(map);
+        var tileLayer;
+        if (mapboxToken) {
+            tileLayer = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=' + mapboxToken, {
+                tileSize: 512,
+                zoomOffset: -1,
+                maxZoom: 19,
+                attribution: '© Mapbox © OpenStreetMap'
+            });
+        } else {
+            tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                subdomains: 'abcd',
+                maxZoom: 19,
+                attribution: '© Mapbox © OpenStreetMap'
+            });
+        }
+        tileLayer.addTo(map);
 
         L.control.attribution({
             position: 'bottomright',

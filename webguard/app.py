@@ -37,7 +37,7 @@ def inject_global_data():
     return {
         "latest_scan_id": latest["id"] if latest else 1,
         "has_scans": latest is not None,
-        "mapbox_token": os.environ.get("VITE_MAPBOX_TOKEN") or os.environ.get("MAPBOX_TOKEN") or "pk.eyJ1IjoiYXZpaWNyb2Z0IiwiYSI6ImNtdXp1MmRkMzA3ZzkyeXF5cHp6Y2ptdXMifQ.tubj9TNKBuFUzvuj7Mdx-Q"
+        "mapbox_token": os.environ.get("VITE_MAPBOX_TOKEN", "").strip() or os.environ.get("MAPBOX_TOKEN", "").strip()
     }
 
 

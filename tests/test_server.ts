@@ -141,6 +141,13 @@ async function runTests() {
     assert(typeof json.longitude === 'number', 'Expected numeric longitude');
   });
 
+  await test('GET /api/config returns client config safely from environment', async () => {
+    const res = await fetch(`${baseUrl}/api/config`);
+    assert(res.status === 200, `Expected 200, got ${res.status}`);
+    const json = await res.json();
+    assert(typeof json.mapbox_token === 'string', 'Expected mapbox_token string');
+  });
+
   await new Promise<void>((resolve) => {
     server.close(() => {
       console.log(`\nTests finished: ${passed}/${total} passed.\n`);
